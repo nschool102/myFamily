@@ -1074,40 +1074,51 @@
                 { label: "Số BHYT", value: member.bhyt, category: "Thông tin chung" },
                 
                 { label: "Số CCCD", value: member.cccd.so, category: "Căn cước công dân" },
-                { label: "CCCD Ngày cấp", value: member.cccd.ngaycap, category: "Căn cước công dân" },
-                { label: "CCCD Ngày hết hạn", value: member.cccd.ngayhethan, category: "Căn cước công dân" },
-                { label: "CCCD Nơi cấp", value: member.cccd.noicap, category: "Căn cước công dân" },
+                { label: "Ngày cấp", value: member.cccd.ngaycap, category: "Căn cước công dân" },
+                { label: "Ngày hết hạn", value: member.cccd.ngayhethan, category: "Căn cước công dân" },
+                { label: "Nơi cấp", value: member.cccd.noicap, category: "Căn cước công dân" },
                 
                 { label: "Số hộ chiếu", value: member.hochieu.so, category: "Hộ chiếu" },
-                { label: "Hộ chiếu Ngày cấp", value: member.hochieu.ngaycap, category: "Hộ chiếu" },
-                { label: "Hộ chiếu Ngày hết hạn", value: member.hochieu.ngayhethan, category: "Hộ chiếu" },
-                { label: "Hộ chiếu Nơi cấp", value: member.hochieu.noicap, category: "Hộ chiếu" },
+                { label: "Ngày cấp", value: member.hochieu.ngaycap, category: "Hộ chiếu" },
+                { label: "Ngày hết hạn", value: member.hochieu.ngayhethan, category: "Hộ chiếu" },
+                { label: "Nơi cấp", value: member.hochieu.noicap, category: "Hộ chiếu" },
                 
-                { label: "Số LLTP", value: member.lltp.so, category: "Lí lịch tư pháp" },
-                { label: "LLTP Ngày cấp", value: member.lltp.ngaycap, category: "Lí lịch tư pháp" },
-                { label: "LLTP Nơi cấp", value: member.lltp.noicap, category: "Lí lịch tư pháp" }
+                { label: "Số phiếu", value: member.lltp.so, category: "Lí lịch tư pháp" },
+                { label: "Ngày cấp", value: member.lltp.ngaycap, category: "Lí lịch tư pháp" },
+                { label: "Nơi cấp", value: member.lltp.noicap, category: "Lí lịch tư pháp" }
             ];
             
             let currentCategory = "";
             let fullTextToCopy = `THÔNG TIN THÀNH VIÊN: ${member.nickname}\n`;
-
+        
             fieldMapping.forEach(field => {
                 const val = field.value || "--";
                 
-                // Thêm tiêu đề nhóm (ví dụ: Căn cước công dân, Hộ chiếu)
+                // KIỂM TRA ĐỂ TẠO TIÊU ĐỀ NHÓM VÀ ĐỒNG BỘ MÀU THEO DEMO
                 if (field.category !== currentCategory) {
                     currentCategory = field.category;
                     const catHeader = document.createElement("h4");
                     catHeader.textContent = currentCategory;
-                    catHeader.style.color = "#2196F3";
-                    catHeader.style.marginTop = "15px";
-                    catHeader.style.marginBottom = "5px";
-                    fieldsContainer.appendChild(catHeader);
+                    catHeader.style.marginTop = "20px";
+                    catHeader.style.marginBottom = "8px";
+                    catHeader.style.fontWeight = "bold";
                     
+                    // Đổ màu chuẩn chỉnh cho từng nhóm thông tin
+                    if (currentCategory === "Căn cước công dân") {
+                        catHeader.style.color = "#2196F3"; // Xanh dương
+                    } else if (currentCategory === "Hộ chiếu") {
+                        catHeader.style.color = "#4CAF50"; // Xanh lá
+                    } else if (currentCategory === "Lí lịch tư pháp") {
+                        catHeader.style.color = "#FF9800"; // Màu cam
+                    } else {
+                        catHeader.style.color = "var(--theme-color)"; // Nhóm chung ăn theo màu app
+                    }
+                    
+                    fieldsContainer.appendChild(catHeader);
                     fullTextToCopy += `\n[ ${currentCategory.toUpperCase()} ]\n`;
                 }
                 
-                // Tạo dòng dữ liệu hiển thị (Dạng stat-row cũ của bạn)
+                // Tạo dòng dữ liệu hiển thị
                 const row = document.createElement("div");
                 row.className = "stat-row";
                 row.style.cursor = "pointer";
@@ -1116,11 +1127,11 @@
                 row.style.transition = "background 0.2s";
                 row.innerHTML = `<span>${field.label}:</span><strong>${val}</strong>`;
                 
-                // Hiệu ứng đổi màu nền nhẹ khi di chuột/chạm vào để báo hiệu bấm được
+                // Hiệu ứng hover nền tối khi di chuột/chạm
                 row.onmouseover = () => row.style.background = "#2a2a2a";
                 row.onmouseout = () => row.style.background = "transparent";
                 
-                // Sự kiện click: Chỉ copy phần giá trị dữ liệu (Bỏ phần nhãn label)
+                // Sự kiện click: Chỉ copy phần giá trị dữ liệu thực tế
                 row.onclick = () => copyToClipboard(val, field.label);
                 
                 fieldsContainer.appendChild(row);
@@ -1138,7 +1149,6 @@
             // Hiển thị modal lên màn hình
             document.getElementById("family-modal").style.display = "flex";
         }
-
         // 5. Hàm đóng Modal
         function closeFamilyModal() {
             document.getElementById("family-modal").style.display = "none";
