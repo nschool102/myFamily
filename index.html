@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
- /* ==========================================================================
+/* ==========================================================================
    1. KHAI BÁO BIẾN TOÀN CỤC (CSS VARIABLES)
    ========================================================================== */
 :root {
@@ -15,7 +15,7 @@
     --theme-color: #e91e63;
     --text-on-theme: #ffffff;
     
-    /* System colors */
+    /* System colors - MẶC ĐỊNH LIGHT MODE */
     --primary-bg: #ffffff;
     --secondary-bg: #f5f5f5;
     --text-color: #333333;
@@ -25,10 +25,25 @@
     --success-color: #4CAF50;
     --card-bg: #ffffff;
     --modal-bg: rgba(0,0,0,0.5);
+    
+    /* Dark mode variables (mặc định là light) */
+    --header-bg: var(--theme-color);
+    --header-text: var(--text-on-theme);
+    --nav-bg: var(--card-bg);
+    --nav-border: var(--border-color);
+    --tab-color: var(--text-color);
+    --tab-active: var(--theme-color);
+    --tab-border: var(--theme-color);
+    --input-bg: var(--primary-bg);
+    --scroll-bg: var(--theme-color);
+    --scroll-text: var(--text-on-theme);
+    --modal-content-bg: var(--card-bg);
+    --modal-text: var(--text-color);
+    --stat-label-color: #777;
 }
 
 /* ==========================================================================
-   2. DARK MODE
+   2. DARK MODE - GHI ĐÈ CÁC BIẾN
    ========================================================================== */
 [data-theme="dark"] {
     --primary-bg: #121212;
@@ -36,25 +51,50 @@
     --text-color: #e0e0e0;
     --border-color: #333333;
     --card-bg: #1e1e1e;
+    --modal-bg: rgba(0,0,0,0.8);
+    
+    /* Dark mode cho các thành phần đặc biệt */
+    --header-bg: #1a1a1a;
+    --header-text: #ffffff;
+    --nav-bg: #1e1e1e;
+    --nav-border: #333333;
+    --tab-color: #999999;
+    --tab-active: var(--theme-color);
+    --tab-border: var(--theme-color);
+    --input-bg: #2a2a2a;
+    --scroll-bg: #333333;
+    --scroll-text: #ffffff;
+    --modal-content-bg: #1e1e1e;
+    --modal-text: #e0e0e0;
+    --stat-label-color: #999;
 }
 
 /* ==========================================================================
-   3. CHỐNG LÓA CHO MÀU VÀNG
+   3. CHỐNG LÓA CHO MÀU VÀNG (CẢ LIGHT VÀ DARK)
    ========================================================================== */
 .theme-yellow {
     --text-on-theme: #111111;
 }
 
+[data-theme="dark"].theme-yellow {
+    --text-on-theme: #111111;
+    --header-text: #111111;
+}
+
 /* ==========================================================================
    4. RESET & BODY
    ========================================================================== */
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     margin: 0;
     padding: 0;
     background-color: var(--secondary-bg);
     color: var(--text-color);
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
     padding-bottom: 80px;
 }
 
@@ -62,8 +102,8 @@ body {
    5. HEADER
    ========================================================================== */
 .header {
-    background-color: var(--theme-color);
-    color: var(--text-on-theme);
+    background-color: var(--header-bg);
+    color: var(--header-text);
     padding: 15px;
     text-align: center;
     font-size: 1.2rem;
@@ -72,6 +112,13 @@ body {
     top: 0;
     z-index: 100;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Khi ở light mode và có theme màu */
+.header:not([data-theme="dark"]) {
+    background-color: var(--theme-color);
+    color: var(--text-on-theme);
 }
 
 /* ==========================================================================
@@ -82,32 +129,33 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
-    background-color: var(--card-bg);
+    background-color: var(--nav-bg);
     display: flex;
     justify-content: space-around;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--nav-border);
     z-index: 100;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .tab-btn {
     background: none;
     border: none;
-    color: var(--text-color);
+    color: var(--tab-color);
     padding: 15px 5px;
     font-size: 0.9rem;
     cursor: pointer;
     flex: 1;
     text-align: center;
     opacity: 0.6;
-    transition: 0.2s;
+    transition: all 0.3s ease;
 }
 
 .tab-btn.active {
     opacity: 1;
-    color: var(--theme-color);
+    color: var(--tab-active);
     font-weight: bold;
-    border-top: 3px solid var(--theme-color);
+    border-top: 3px solid var(--tab-border);
 }
 
 /* ==========================================================================
@@ -134,6 +182,13 @@ body {
     margin-bottom: 15px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--text-color);
 }
 
 /* ==========================================================================
@@ -148,6 +203,7 @@ body {
     margin-bottom: 6px;
     font-weight: 500;
     font-size: 0.9rem;
+    color: var(--text-color);
 }
 
 .form-control {
@@ -155,14 +211,25 @@ body {
     padding: 12px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    background-color: var(--primary-bg);
+    background-color: var(--input-bg);
     color: var(--text-color);
     box-sizing: border-box;
     font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--theme-color);
+}
+
+.form-control option {
+    background-color: var(--input-bg);
+    color: var(--text-color);
 }
 
 /* ==========================================================================
-   10. BUTTONS (CHỈ 1 CLASS DUY NHẤT)
+   10. BUTTONS
    ========================================================================== */
 .btn {
     background-color: var(--theme-color) !important;
@@ -222,10 +289,16 @@ body {
     z-index: 1000;
     justify-content: center;
     align-items: center;
+    transition: all 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
 }
 
 .modal-content {
-    background-color: var(--card-bg);
+    background-color: var(--modal-content-bg);
+    color: var(--modal-text);
     padding: 20px;
     border-radius: 10px;
     width: 90%;
@@ -233,6 +306,18 @@ body {
     max-height: 85vh;
     overflow-y: auto;
     position: relative;
+    transition: all 0.3s ease;
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-color);
+    background: none;
+    border: none;
 }
 
 /* ==========================================================================
@@ -251,13 +336,14 @@ body {
 
 .info-label {
     font-size: 0.85rem;
-    color: #777;
+    color: var(--stat-label-color);
 }
 
 .info-value {
     font-size: 1rem;
     font-weight: 500;
     margin-top: 2px;
+    color: var(--text-color);
 }
 
 /* ==========================================================================
@@ -267,8 +353,8 @@ body {
     position: fixed;
     bottom: 85px;
     right: 20px;
-    background-color: var(--theme-color);
-    color: var(--text-on-theme);
+    background-color: var(--scroll-bg);
+    color: var(--scroll-text);
     width: 48px;
     height: 48px;
     border-radius: 50%;
@@ -281,6 +367,11 @@ body {
     font-weight: bold;
     font-size: 1.3rem;
     z-index: 99;
+    transition: all 0.3s ease;
+}
+
+.scroll-top.show {
+    display: flex;
 }
 
 /* ==========================================================================
@@ -298,6 +389,17 @@ body {
     justify-content: space-between;
     padding: 10px 0;
     border-bottom: 1px dotted var(--border-color);
+    color: var(--text-color);
+}
+
+.stat-label {
+    color: var(--stat-label-color);
+    opacity: 0.7;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: var(--text-color);
 }
 
 /* ==========================================================================
@@ -310,20 +412,132 @@ body {
     margin-bottom: 12px;
     border-radius: 0 6px 6px 0;
     font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .alert-box {
+    background-color: rgba(244, 67, 54, 0.2);
 }
 
 /* ==========================================================================
-   17. UTILITY CLASSES (TÙY CHỌN)
+   17. DARK MODE TOGGLE SWITCH
    ========================================================================== */
-/* Class hỗ trợ cho text có màu theme */
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.theme-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--theme-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+/* ==========================================================================
+   18. FAMILY MODAL DARK MODE FIX
+   ========================================================================== */
+#family-modal .modal-content {
+    background: var(--modal-content-bg);
+    color: var(--modal-text);
+}
+
+#family-modal .modal-content h3 {
+    color: var(--theme-color);
+}
+
+#family-modal .modal-content .stat-row {
+    color: var(--modal-text);
+}
+
+#family-modal .modal-content .stat-row:hover {
+    background: var(--secondary-bg);
+}
+
+#family-modal .modal-content .btn {
+    background-color: var(--theme-color) !important;
+    color: var(--text-on-theme) !important;
+}
+
+/* ==========================================================================
+   19. UTILITY CLASSES
+   ========================================================================== */
 .theme-text {
     color: var(--theme-color) !important;
 }
 
-/* Class hỗ trợ cho background theme */
 .theme-bg {
     background-color: var(--theme-color) !important;
     color: var(--text-on-theme) !important;
+}
+
+.text-muted {
+    color: var(--text-color);
+    opacity: 0.6;
+}
+
+/* ==========================================================================
+   20. RESPONSIVE
+   ========================================================================== */
+@media (max-width: 480px) {
+    .family-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .header {
+        font-size: 1rem;
+        padding: 12px;
+    }
+    
+    .tab-btn {
+        font-size: 0.75rem;
+        padding: 12px 3px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
 }
     </style>
 </head>
@@ -444,7 +658,7 @@ body {
             <div class="stat-row"><span>Số Dư Hiện Tại:</span><strong id="sec4-balance">0</strong></div>
             <div class="stat-row"><span>Tổng Thu:</span><strong id="sec4-thu">0</strong></div>
             <div class="stat-row"><span>Tổng Chi:</span><strong id="sec4-net-chi">0</strong></div>
-            <div class="stat-row"><span>Tổng Số Tiền Tiết Kiệm:</span><strong id="sec4-savings" style="color:var(--primary-color);">0</strong></div>
+            <div class="stat-row"><span>Tổng Số Tiền Tiết Kiệm:</span><strong id="sec4-savings" style="color:var(--theme-color);">0</strong></div>
         </div>
     </div>
 
@@ -458,33 +672,32 @@ body {
         </div>
     </div>
 
-    <div id="family-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;">
-        <div class="modal-content" style="background: #1e1e1e; color: #fff; width: 100%; max-width: 500px; max-height: 85vh; border-radius: 12px; padding: 20px; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); box-sizing: border-box;">
+    <div id="family-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span onclick="closeFamilyModal()" class="modal-close" style="position: absolute; top: 12px; right: 18px; font-size: 24px; cursor: pointer; color: var(--text-color);">&times;</span>
             
-            <span onclick="closeFamilyModal()" style="position: absolute; top: 12px; right: 18px; font-size: 24px; cursor: pointer; color: #aaa;">&times;</span>
-            
-            <h3 id="modal-nickname" style="color: #e91e63; margin-top: 5px; margin-bottom: 15px; padding-right: 20px;">Biệt danh</h3>
-            <p style="font-size: 12px; color: #aaa; margin-top: -10px; margin-bottom: 15px;">* Chạm vào từng dòng để sao chép nhanh giá trị</p>
+            <h3 id="modal-nickname" style="color: var(--theme-color); margin-top: 5px; margin-bottom: 15px; padding-right: 20px;">Biệt danh</h3>
+            <p style="font-size: 12px; color: var(--stat-label-color); margin-top: -10px; margin-bottom: 15px;">* Chạm vào từng dòng để sao chép nhanh giá trị</p>
 
             <div id="modal-fields-container"></div>
 
-            <button class="btn" id="btn-copy-all" style="background-color: #00bcd4; width: 100%; margin-top: 20px; font-weight: bold;">
+            <button class="btn" id="btn-copy-all" style="background-color: var(--theme-color); width: 100%; margin-top: 20px; font-weight: bold;">
                 Sao chép toàn bộ thông tin
             </button>
         </div>
-    </div> <!-- end TAB FAMILY -->
+    </div>
 
     <div id="tab-settings" class="tab-content">
         <div class="card">
             <h3>Thay Đổi Giao Diện</h3>
-            <div class="form-group">
-                <label>Chế độ</label>
-                <select id="setting-mode" class="form-control" onchange="applyTheme()">
-                    <option value="light">Light Mode</option>
-                    <option value="dark">Dark Mode</option>
-                </select>
+            <div class="theme-switch-wrapper">
+                <span>🌙 Dark Mode</span>
+                <label class="theme-switch">
+                    <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                    <span class="slider"></span>
+                </label>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-top: 15px;">
                 <label>Màu chủ đạo (Theme)</label>
                 <select id="setting-color" class="form-control" onchange="applyTheme()">
                     <option value="#4CAF50">Xanh Lá</option>
@@ -544,15 +757,6 @@ body {
     </div>
 
     <button class="scroll-top" id="scrollTopBtn" onclick="scrollToTop()">↑</button>
-
-    <div class="modal" id="familyModal">
-        <div class="modal-content">
-            <h3 id="modal-member-title" style="margin-top:0; color: var(--primary-color);">Thông tin thành viên</h3>
-            <div id="modal-member-details"></div>
-            <button class="btn" id="btn-copy-all" style="margin-top:15px; background-color:#607D8B;">Copy Toàn Bộ Thông Tin</button>
-            <button class="btn" onclick="closeModal()" style="margin-top:8px; background-color:#9e9e9e;">Đóng</button>
-        </div>
-    </div>
 
     <script>
         // BIẾN CẤU HÌNH TOÀN CỤC CỦA BẠN
@@ -691,7 +895,16 @@ body {
             document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
             
             document.getElementById(`tab-${tabName}`).classList.add("active");
-            if(event) event.target.classList.add("active");
+            // Fix: use event parameter properly
+            const btns = document.querySelectorAll(".tab-btn");
+            btns.forEach(btn => {
+                if(btn.textContent.toLowerCase().includes(tabName.toLowerCase()) || 
+                   (tabName === 'thongke' && btn.textContent === 'Thống Kê') ||
+                   (tabName === 'family' && btn.textContent === 'Family') ||
+                   (tabName === 'settings' && btn.textContent === 'Settings')) {
+                    btn.classList.add("active");
+                }
+            });
 
             if (tabName === 'chi' || tabName === 'thongke') {
                 renderChartsAndStats();
@@ -743,7 +956,7 @@ body {
 
         function syncToGoogleSheets() {
             // 1. Kiểm tra điều kiện: Có mạng? Đang chạy đồng bộ sẵn không? Link API đã cấu hình chưa?
-            if (!navigator.onLine || isSyncing || CONFIG.apiEndpoint) {
+            if (!navigator.onLine || isSyncing || !CONFIG.apiEndpoint) {
                 return;
             }
             
@@ -977,7 +1190,7 @@ body {
         }
 
         function generateFamilyInterface() {
-            if (navigator.onLine && !CONFIG.apiEndpoint) {
+            if (navigator.onLine && CONFIG.apiEndpoint) {
                 fetch(`${CONFIG.apiEndpoint}?action=getFamily`)
                 .then(res => res.json()).then(data => renderFamilyGrid(data))
                 .catch(() => renderFamilyGrid(sampleFamily));
@@ -1000,7 +1213,7 @@ body {
                 { l: "Biệt danh", v: m.nickname }, { l: "Họ tên", v: m.name }, { l: "Ngày sinh", v: m.dob }, { l: "Nơi sinh", v: m.pob }, { l: "Địa chỉ", v: m.address },
                 { l: "CCCD: Số", v: m.cccd_no }, { l: "CCCD: Ngày cấp", v: m.cccd_date }, { l: "CCCD: Ngày hết hạn", v: m.cccd_exp }, { l: "CCCD: Nơi cấp", v: m.cccd_place },
                 { l: "Hộ chiếu: Số", v: m.passport_no }, { l: "Hộ chiếu: Ngày cấp", v: m.passport_date }, { l: "Hộ chiếu: Ngày hết hạn", v: m.passport_exp }, { l: "Hộ chiếu: Nơi cấp", v: m.passport_place },
-                { l: "Thẻ BHYT", v: m.bhyt }, { l: "Mã số thuế", v: v = m.tax_id }, { l: "LLTP: Số", v: m.lltp_no }, { l: "LLTP: Ngày cấp", v: m.lltp_date }, { l: "LLTP: Nơi cấp", v: m.lltp_place }
+                { l: "Thẻ BHYT", v: m.bhyt }, { l: "Mã số thuế", v: m.tax_id }, { l: "LLTP: Số", v: m.lltp_no }, { l: "LLTP: Ngày cấp", v: m.lltp_date }, { l: "LLTP: Nơi cấp", v: m.lltp_place }
             ];
 
             const detailsDiv = document.getElementById("modal-member-details");
@@ -1028,8 +1241,29 @@ body {
 
         function closeModal() { document.getElementById("familyModal").style.display = "none"; }
 
-        // Settings - Tự động hóa Theme biến động & Khoản chi cố định
-        // TỐI ƯU FUNCTION
+        // ============================================================
+        // THEME FUNCTIONS - FIXED FOR DARK/LIGHT MODE
+        // ============================================================
+        
+        // Hàm tính độ sáng màu
+        function getColorBrightness(hex) {
+            let r, g, b;
+            if (hex.startsWith('#')) {
+                const h = hex.slice(1);
+                if (h.length === 3) {
+                    r = parseInt(h[0] + h[0], 16);
+                    g = parseInt(h[1] + h[1], 16);
+                    b = parseInt(h[2] + h[2], 16);
+                } else {
+                    r = parseInt(h.slice(0, 2), 16);
+                    g = parseInt(h.slice(2, 4), 16);
+                    b = parseInt(h.slice(4, 6), 16);
+                }
+            }
+            return (r * 299 + g * 587 + b * 114) / 1000;
+        }
+
+        // Hàm áp dụng theme màu
         async function applyTheme() {
             const colorInput = document.getElementById("setting-color");
             if (!colorInput) return;
@@ -1041,15 +1275,22 @@ body {
             // 1. Cập nhật biến màu
             root.style.setProperty('--theme-color', colorLower);
             
-            // 2. Kiểm tra màu vàng (dùng regex linh hoạt hơn)
+            // 2. Kiểm tra màu vàng
             const isYellow = /yellow|#f{0,2}fe?[cd]|#ff[c-e]|#ffee58|#ffeb3b|#ffc107|#ffff00/i.test(colorLower);
             root.classList.toggle("theme-yellow", isYellow);
             
-            // 3. Tự động tính màu chữ tương phản (nếu cần)
+            // 3. Tự động tính màu chữ tương phản
             const brightness = getColorBrightness(colorLower);
-            root.style.setProperty('--text-on-theme', brightness > 150 ? '#111111' : '#ffffff');
+            const textColor = brightness > 150 ? '#111111' : '#ffffff';
+            root.style.setProperty('--text-on-theme', textColor);
             
-            // 4. Lưu vào IndexedDB (có fallback)
+            // 4. Cập nhật màu cho toggle switch
+            const toggle = document.getElementById('darkModeToggle');
+            if (toggle && toggle.checked) {
+                document.querySelector('.slider').style.backgroundColor = themeColor;
+            }
+            
+            // 5. Lưu vào storage
             try {
                 if (db) {
                     await new Promise((resolve, reject) => {
@@ -1067,25 +1308,75 @@ body {
                 localStorage.setItem('themeColor', themeColor);
             }
         }
-        
-        // Hàm tính độ sáng màu
-        function getColorBrightness(hex) {
-            // Chuyển hex sang RGB và tính độ sáng
-            let r, g, b;
-            if (hex.startsWith('#')) {
-                const h = hex.slice(1);
-                if (h.length === 3) {
-                    r = parseInt(h[0] + h[0], 16);
-                    g = parseInt(h[1] + h[1], 16);
-                    b = parseInt(h[2] + h[2], 16);
-                } else {
-                    r = parseInt(h.slice(0, 2), 16);
-                    g = parseInt(h.slice(2, 4), 16);
-                    b = parseInt(h.slice(4, 6), 16);
+
+        // Hàm toggle dark mode
+        function toggleDarkMode(enable) {
+            const root = document.documentElement;
+            
+            if (enable) {
+                root.setAttribute('data-theme', 'dark');
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                root.removeAttribute('data-theme');
+                localStorage.setItem('darkMode', 'false');
+            }
+            
+            // Cập nhật màu toggle switch
+            const colorInput = document.getElementById("setting-color");
+            if (colorInput) {
+                const slider = document.querySelector('.slider');
+                if (slider) {
+                    slider.style.backgroundColor = enable ? colorInput.value : '#ccc';
                 }
             }
-            return (r * 299 + g * 587 + b * 114) / 1000;
         }
+
+        // Hàm load theme từ storage
+        async function loadTheme() {
+            // Load dark mode
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'true') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                const toggle = document.getElementById('darkModeToggle');
+                if (toggle) {
+                    toggle.checked = true;
+                    const slider = document.querySelector('.slider');
+                    if (slider) {
+                        const colorInput = document.getElementById('setting-color');
+                        slider.style.backgroundColor = colorInput ? colorInput.value : '#e91e63';
+                    }
+                }
+            }
+            
+            // Load color theme
+            let savedColor = localStorage.getItem('themeColor');
+            
+            if (!savedColor && db) {
+                try {
+                    const tx = db.transaction("settings", "readonly");
+                    const store = tx.objectStore("settings");
+                    const req = store.get("color");
+                    savedColor = await new Promise((resolve) => {
+                        req.onsuccess = () => resolve(req.result?.value || null);
+                        req.onerror = () => resolve(null);
+                    });
+                } catch (error) {
+                    console.warn('Không thể đọc từ IndexedDB');
+                }
+            }
+            
+            if (savedColor) {
+                const colorInput = document.getElementById("setting-color");
+                if (colorInput) {
+                    colorInput.value = savedColor;
+                }
+                await applyTheme();
+            }
+        }
+
+        // ============================================================
+        // END THEME FUNCTIONS
+        // ============================================================
 
         function addRecurringRule(e) {
             e.preventDefault();
@@ -1130,7 +1421,7 @@ body {
                 e.target.result.forEach(item => {
                     if(item.key.startsWith("rule_")) {
                         let r = item.value;
-                        container.innerHTML += `<div class="stat-row"><span>Ngày ${r.day}: [${r.action.toUpperCase()}] ${r.type} $\rightarrow$ ${r.subtype} ${r.note ? '('+r.note+')' : ''}</span><strong>${formatVND(r.amount)}</strong></div>`;
+                        container.innerHTML += `<div class="stat-row"><span>Ngày ${r.day}: [${r.action.toUpperCase()}] ${r.type} -> ${r.subtype} ${r.note ? '('+r.note+')' : ''}</span><strong>${formatVND(r.amount)}</strong></div>`;
                     }
                 });
             };
@@ -1207,27 +1498,13 @@ body {
                 return;
             }
             
-            // Lấy màu chủ đề hiện tại từ cấu hình hoặc từ giao diện app của bạn
-            // (Giả sử hệ thống của bạn đang dùng một class chung cho nút bấm là "btn")
             localFamilyData.forEach(member => {
                 const btn = document.createElement("button");
-                
-                // Thêm class "btn" chuẩn của app để tự động ăn theo màu nền/màu chữ của Theme hiện tại
                 btn.className = "btn"; 
                 btn.textContent = member.nickname;
-                
-                // Cấu hình layout hiển thị đồng đều
                 btn.style.flex = "1 1 calc(50% - 5px)"; 
                 btn.style.minWidth = "120px";
                 btn.style.margin = "5px 0";
-                
-                /* 
-                   LƯU Ý KHỬ MÀU CỨNG: 
-                   Đã bỏ dòng btn.style.backgroundColor = "#e91e63";
-                   Bây giờ nút bấm sẽ tự động dùng chung màu với nút "Ghi Khoản Chi" hoặc màu cài đặt hệ thống.
-                */
-        
-                // Gắn sự kiện click để mở modal như cũ
                 btn.onclick = () => openFamilyModal(member.id);
                 container.appendChild(btn);
             });
@@ -1237,7 +1514,6 @@ body {
         function copyToClipboard(text, fieldName) {
             if (!text || text === "--") return;
             navigator.clipboard.writeText(text).then(() => {
-                // Tạo hiệu ứng thông báo toast nhanh nổi lên màn hình
                 alert(`Đã sao chép ${fieldName}: ${text}`);
             }).catch(err => {
                 console.error("Không thể sao chép: ", err);
@@ -1251,9 +1527,8 @@ body {
             
             document.getElementById("modal-nickname").textContent = member.nickname;
             const fieldsContainer = document.getElementById("modal-fields-container");
-            fieldsContainer.innerHTML = ""; // Xóa dữ liệu cũ trong modal
+            fieldsContainer.innerHTML = "";
             
-            // Định nghĩa danh sách cấu trúc các trường thông tin cần hiển thị
             const fieldMapping = [
                 { label: "Họ tên", value: member.fullname, category: "Thông tin chung" },
                 { label: "Ngày sinh", value: member.dob, category: "Thông tin chung" },
@@ -1262,19 +1537,19 @@ body {
                 { label: "Mã số thuế", value: member.masothue, category: "Thông tin chung" },
                 { label: "Số BHYT", value: member.bhyt, category: "Thông tin chung" },
                 
-                { label: "Số CCCD", value: member.cccd.so, category: "Căn cước công dân" },
-                { label: "Ngày cấp", value: member.cccd.ngaycap, category: "Căn cước công dân" },
-                { label: "Ngày hết hạn", value: member.cccd.ngayhethan, category: "Căn cước công dân" },
-                { label: "Nơi cấp", value: member.cccd.noicap, category: "Căn cước công dân" },
+                { label: "Số CCCD", value: member.cccd?.so || "--", category: "Căn cước công dân" },
+                { label: "Ngày cấp", value: member.cccd?.ngaycap || "--", category: "Căn cước công dân" },
+                { label: "Ngày hết hạn", value: member.cccd?.ngayhethan || "--", category: "Căn cước công dân" },
+                { label: "Nơi cấp", value: member.cccd?.noicap || "--", category: "Căn cước công dân" },
                 
-                { label: "Số hộ chiếu", value: member.hochieu.so, category: "Hộ chiếu" },
-                { label: "Ngày cấp", value: member.hochieu.ngaycap, category: "Hộ chiếu" },
-                { label: "Ngày hết hạn", value: member.hochieu.ngayhethan, category: "Hộ chiếu" },
-                { label: "Nơi cấp", value: member.hochieu.noicap, category: "Hộ chiếu" },
+                { label: "Số hộ chiếu", value: member.hochieu?.so || "--", category: "Hộ chiếu" },
+                { label: "Ngày cấp", value: member.hochieu?.ngaycap || "--", category: "Hộ chiếu" },
+                { label: "Ngày hết hạn", value: member.hochieu?.ngayhethan || "--", category: "Hộ chiếu" },
+                { label: "Nơi cấp", value: member.hochieu?.noicap || "--", category: "Hộ chiếu" },
                 
-                { label: "Số phiếu", value: member.lltp.so, category: "Lí lịch tư pháp" },
-                { label: "Ngày cấp", value: member.lltp.ngaycap, category: "Lí lịch tư pháp" },
-                { label: "Nơi cấp", value: member.lltp.noicap, category: "Lí lịch tư pháp" }
+                { label: "Số phiếu", value: member.lltp?.so || "--", category: "Lí lịch tư pháp" },
+                { label: "Ngày cấp", value: member.lltp?.ngaycap || "--", category: "Lí lịch tư pháp" },
+                { label: "Nơi cấp", value: member.lltp?.noicap || "--", category: "Lí lịch tư pháp" }
             ];
             
             let currentCategory = "";
@@ -1283,7 +1558,6 @@ body {
             fieldMapping.forEach(field => {
                 const val = field.value || "--";
                 
-                // KIỂM TRA ĐỂ TẠO TIÊU ĐỀ NHÓM VÀ ĐỒNG BỘ MÀU THEO DEMO
                 if (field.category !== currentCategory) {
                     currentCategory = field.category;
                     const catHeader = document.createElement("h4");
@@ -1292,22 +1566,20 @@ body {
                     catHeader.style.marginBottom = "8px";
                     catHeader.style.fontWeight = "bold";
                     
-                    // Đổ màu chuẩn chỉnh cho từng nhóm thông tin
                     if (currentCategory === "Căn cước công dân") {
-                        catHeader.style.color = "#2196F3"; // Xanh dương
+                        catHeader.style.color = "#2196F3";
                     } else if (currentCategory === "Hộ chiếu") {
-                        catHeader.style.color = "#4CAF50"; // Xanh lá
+                        catHeader.style.color = "#4CAF50";
                     } else if (currentCategory === "Lí lịch tư pháp") {
-                        catHeader.style.color = "#FF9800"; // Màu cam
+                        catHeader.style.color = "#FF9800";
                     } else {
-                        catHeader.style.color = "var(--theme-color)"; // Nhóm chung ăn theo màu app
+                        catHeader.style.color = "var(--theme-color)";
                     }
                     
                     fieldsContainer.appendChild(catHeader);
                     fullTextToCopy += `\n[ ${currentCategory.toUpperCase()} ]\n`;
                 }
                 
-                // Tạo dòng dữ liệu hiển thị
                 const row = document.createElement("div");
                 row.className = "stat-row";
                 row.style.cursor = "pointer";
@@ -1316,11 +1588,9 @@ body {
                 row.style.transition = "background 0.2s";
                 row.innerHTML = `<span>${field.label}:</span><strong>${val}</strong>`;
                 
-                // Hiệu ứng hover nền tối khi di chuột/chạm
-                row.onmouseover = () => row.style.background = "#2a2a2a";
+                row.onmouseover = () => row.style.background = "var(--secondary-bg)";
                 row.onmouseout = () => row.style.background = "transparent";
                 
-                // Sự kiện click: Chỉ copy phần giá trị dữ liệu thực tế
                 row.onclick = () => copyToClipboard(val, field.label);
                 
                 fieldsContainer.appendChild(row);
@@ -1330,14 +1600,13 @@ body {
                 }
             });
             
-            // Gắn sự kiện copy toàn bộ cho button dưới cùng
             document.getElementById("btn-copy-all").onclick = () => {
                 copyToClipboard(fullTextToCopy, `toàn bộ lý lịch của ${member.nickname}`);
             };
             
-            // Hiển thị modal lên màn hình
             document.getElementById("family-modal").style.display = "flex";
         }
+        
         // 5. Hàm đóng Modal
         function closeFamilyModal() {
             document.getElementById("family-modal").style.display = "none";
@@ -1347,7 +1616,6 @@ body {
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(loadFamilyDataFromSheet, 1000);
         });
-        // end XỬ LÍ HIỂN THỊ FAMILY
 
         // Xử lý nút cuộn nhanh lên đầu trang (Scroll To Top)
         window.onscroll = function() {
@@ -1364,9 +1632,9 @@ body {
                     if(item.key === "mode") document.getElementById("setting-mode").value = item.value;
                     if(item.key === "color") document.getElementById("setting-color").value = item.value;
                 });
-                applyTheme();
+                loadTheme();
                 initFormOptions();
-                updateRecurringCategories(); // Thêm dòng này để khởi tạo danh mục Form cố định
+                updateRecurringCategories();
                 renderRulesList();
                 renderChartsAndStats();
             };
