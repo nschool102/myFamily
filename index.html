@@ -296,22 +296,30 @@
             <form id="form-recurring" onsubmit="addRecurringRule(event)">
                 <div class="form-group">
                     <label>Loại giao dịch</label>
-                    <select id="recur-action-type" class="form-control">
+                    <select id="recur-action-type" class="form-control" onchange="updateRecurringCategories()">
                         <option value="chi">Chi</option>
                         <option value="thu">Thu</option>
                     </select>
                 </div>
                 <div class="form-group">
+                    <label>Danh mục phân loại (Type)</label>
+                    <select id="recur-type" class="form-control" onchange="updateRecurringSubtypes()"></select>
+                </div>
+                <div class="form-group">
+                    <label>Danh mục chi tiết (Subtype)</label>
+                    <select id="recur-subtype" class="form-control"></select>
+                </div>
+                <div class="form-group">
                     <label>Ngày thực hiện (1-31 hàng tháng)</label>
-                    <input type="number" id="recur-day" class="form-control" min="1" max="31" required>
+                    <input type="number" id="recur-day" class="form-control" min="1" max="31" placeholder="Ví dụ: 5" required>
                 </div>
                 <div class="form-group">
-                    <label>Số tiền</label>
-                    <input type="text" id="recur-amount" class="form-control" oninput="formatCurrency(this)" required>
+                    <label>Số tiền (VND)</label>
+                    <input type="text" id="recur-amount" class="form-control" oninput="formatCurrency(this)" placeholder="0" required>
                 </div>
                 <div class="form-group">
-                    <label>Tên khoản (Subtype / Ghi chú)</label>
-                    <input type="text" id="recur-note" class="form-control" placeholder="Ví dụ: quĩ từ thiện SOS" required>
+                    <label>Ghi chú thêm</label>
+                    <input type="text" id="recur-note" class="form-control" placeholder="Ví dụ: Tiền quĩ đóng định kỳ...">
                 </div>
                 <button type="submit" class="btn">Thêm Cấu Hình Tự Động</button>
             </form>
@@ -411,6 +419,35 @@
         function updateSubtypes(mode) {
             const typeSelect = document.getElementById(`${mode}-type`);
             const subtypeSelect = document.getElementById(`${mode}-subtype`);
+            const selectedType = typeSelect.value;
+            
+            subtypeSelect.innerHTML = "";
+            if (CATEGORIES[mode][selectedType]) {
+                CATEGORIES[mode][selectedType].forEach(sub => {
+                    let opt = document.createElement("option");
+                    opt.value = sub; opt.textContent = sub;
+                    subtypeSelect.appendChild(opt);
+                });
+            }
+        }
+
+        function updateRecurringCategories() {
+            const mode = document.getElementById("recur-action-type").value;
+            const typeSelect = document.getElementById("recur-type");
+            
+            typeSelect.innerHTML = "";
+            Object.keys(CATEGORIES[mode]).forEach(type => {
+                let opt = document.createElement("option");
+                opt.value = type; opt.textContent = type;
+                typeSelect.appendChild(opt);
+            });
+            updateRecurringSubtypes();
+        }
+
+        function updateRecurringSubtypes() {
+            const mode = document.getElementById("recur-action-type").value;
+            const typeSelect = document.getElementById("recur-type");
+            const subtypeSelect = document.getElementById("recur-subtype");
             const selectedType = typeSelect.value;
             
             subtypeSelect.innerHTML = "";
@@ -801,15 +838,19 @@
         function addRecurringRule(e) {
             e.preventDefault();
             const action = document.getElementById("recur-action-type").value;
+            const type = document.getElementById("recur-type").value;
+            const subtype = document.getElementById("recur-subtype").value;
             const day = parseInt(document.getElementById("recur-day").value);
             const amount = parseCurrency(document.getElementById("recur-amount").value);
             const note = document.getElementById("recur-note").value;
 
-            const rule = { action, day, amount, note, id: Date.now() };
+            // Lưu đầy đủ cả Type và Subtype vào rule cấu hình
+            const rule = { action, type, subtype, day, amount, note: note || "", id: Date.now() };
             const tx = db.transaction("settings", "readwrite");
             tx.objectStore("settings").put({ key: `rule_${rule.id}`, value: rule });
             tx.oncomplete = () => {
                 document.getElementById("form-recurring").reset();
+                updateRecurringCategories(); // Reset lại danh mục về mặc định
                 renderRulesList();
                 checkRecurringRules();
             };
@@ -819,11 +860,11 @@
             if(!db) return;
             const container = document.getElementById("recurring-rules-list");
             container.innerHTML = "<h4>Khoản tự động đã cấu hình:</h4>";
-            db.transaction("settings", "readonly").getStore = db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
+            db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
                 e.target.result.forEach(item => {
                     if(item.key.startsWith("rule_")) {
                         let r = item.value;
-                        container.innerHTML += `<div class="stat-row"><span>Ngày ${r.day}: [${r.action.toUpperCase()}] ${r.note}</span><strong>${formatVND(r.amount)}</strong></div>`;
+                        container.innerHTML += `<div class="stat-row"><span>Ngày ${r.day}: [${r.action.toUpperCase()}] ${r.type} $\rightarrow$ ${r.subtype} ${r.note ? '('+r.note+')' : ''}</span><strong>${formatVND(r.amount)}</strong></div>`;
                     }
                 });
             };
@@ -841,23 +882,27 @@
                 getAllTransactions(transactions => {
                     rules.forEach(rule => {
                         if (currentDay >= rule.day) {
-                            let uniqKey = `${rule.note}_${today.getFullYear()}_${today.getMonth()}`;
+                            // Tạo key duy nhất theo tháng/năm để chống chèn trùng lặp
+                            let uniqKey = `${rule.type}_${rule.subtype}_${rule.day}_${today.getFullYear()}_${today.getMonth()}`;
                             let exists = transactions.find(t => t.recurringKey === uniqKey);
                             
                             if (!exists) {
                                 let execDate = new Date(); execDate.setDate(rule.day);
                                 const transaction = {
                                     timestamp: execDate.toISOString(),
-                                    type: rule.action === 'chi' ? "Chi khác" : "Bất thường",
-                                    subtype: rule.note,
+                                    type: rule.type,       // Lấy chuẩn Type đã cấu hình
+                                    subtype: rule.subtype, // Lấy chuẩn Subtype đã cấu hình
                                     amount: rule.action === 'chi' ? -Math.abs(rule.amount) : rule.amount,
-                                    note: "Hệ thống tự động chèn định kỳ",
+                                    note: rule.note ? rule.note + " (Hệ thống tự động chèn)" : "Hệ thống tự động chèn",
                                     synced: 0,
                                     recurringKey: uniqKey
                                 };
                                 const txAdd = db.transaction("transactions", "readwrite");
                                 txAdd.objectStore("transactions").add(transaction);
-                                txAdd.oncomplete = () => { renderChartsAndStats(); syncToGoogleSheets(); };
+                                txAdd.oncomplete = () => { 
+                                    renderChartsAndStats(); 
+                                    syncToGoogleSheets(); 
+                                };
                             }
                         }
                     });
@@ -882,6 +927,7 @@
                 });
                 applyTheme();
                 initFormOptions();
+                updateRecurringCategories(); // Thêm dòng này để khởi tạo danh mục Form cố định
                 renderRulesList();
                 renderChartsAndStats();
             };
