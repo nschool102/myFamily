@@ -494,25 +494,47 @@
         }
 
         // Tự động đẩy dữ liệu lên Google Sheets theo đúng cấu trúc 5 cột khi có mạng
+        let isSyncing = false; // Biến khóa chặn trùng lặp tiến trình song song
+
         function syncToGoogleSheets() {
-            if (!navigator.onLine || CONFIG.apiEndpoint.includes("YOUR_GOOGLE_APPS_SCRIPT_URL")) return;
+            // 1. Kiểm tra điều kiện: Có mạng? Đang chạy đồng bộ sẵn không? Link API đã cấu hình chưa?
+            if (!navigator.onLine || isSyncing || CONFIG.apiEndpoint) {
+                return;
+            }
+            
             getAllTransactions(transactions => {
+                // 2. Chỉ lọc ra các khoản chưa đồng bộ (synced === 0)
                 const unsynced = transactions.filter(t => t.synced === 0);
                 if (unsynced.length === 0) return;
 
+                isSyncing = true; // Khóa tiến trình lại
+                console.log(`Phát hiện ${unsynced.length} khoản offline. Đang tự động đẩy lên Sheet...`);
+
                 fetch(CONFIG.apiEndpoint, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'syncTransactions', data: unsynced })
-                }).then(() => {
-                    const tx = db.transaction("transactions", "readwrite");
-                    const store = tx.objectStore("transactions");
-                    unsynced.forEach(t => {
-                        t.synced = 1;
-                        store.put(t);
-                    });
-                }).catch(err => console.log("Lỗi mạng, dữ liệu vẫn an toàn offline: ", err));
+                })
+                .then(res => res.json())
+                .then(resData => {
+                    if (resData.status === "success") {
+                        // 3. Cập nhật trạng thái synced = 1 ngay lập tức trong bộ nhớ máy để không bao giờ gửi lại nữa
+                        const tx = db.transaction("transactions", "readwrite");
+                        const store = tx.objectStore("transactions");
+                        unsynced.forEach(t => {
+                            t.synced = 1;
+                            store.put(t);
+                        });
+                        
+                        console.log("Đồng bộ ngầm thành công!");
+                        renderChartsAndStats(); // Cập nhật lại biểu đồ hiển thị
+                    }
+                    isSyncing = false; // Mở khóa tiến trình
+                })
+                .catch(err => {
+                    console.log("Lỗi kết nối, dữ liệu vẫn an toàn offline: ", err);
+                    isSyncing = false; // Giải phóng khóa để thử lại lần sau
+                });
             });
         }
 
@@ -710,7 +732,7 @@
         }
 
         function generateFamilyInterface() {
-            if (navigator.onLine && !CONFIG.apiEndpoint.includes("YOUR_GOOGLE_APPS_SCRIPT_URL")) {
+            if (navigator.onLine && !CONFIG.apiEndpoint) {
                 fetch(`${CONFIG.apiEndpoint}?action=getFamily`)
                 .then(res => res.json()).then(data => renderFamilyGrid(data))
                 .catch(() => renderFamilyGrid(sampleFamily));
