@@ -8,7 +8,7 @@
   "description": "Ứng dụng quản lý thu chi gia đình tối ưu chạy offline.",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2343/2343894.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
