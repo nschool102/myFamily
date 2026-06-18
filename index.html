@@ -249,20 +249,41 @@
     </div>
 
     <div id="tab-family" class="tab-content">
-        <div id="family-auth-view" class="card">
-            <h3>Bảo Mật Thông Tin Family</h3>
+        <div class="card">
+            <h3>Thành viên gia đình</h3>
             <div class="form-group">
-                <label>Nhập mật khẩu để truy cập</label>
-                <input type="password" id="family-password" class="form-control" placeholder="****">
+                <label>Chọn thành viên để xem thông tin:</label>
+                <select id="family-selector" class="form-control" onchange="displayMemberInfo()">
+                    <option value="">-- Đang tải dữ liệu... --</option>
+                </select>
             </div>
-            <button class="btn" onclick="verifyFamilyAuth()">Xác Nhận</button>
         </div>
 
-        <div id="family-main-view" style="display:none;">
-            <div class="card">
-                <h3>Thành Viên Gia Đình (7)</h3>
-                <div class="family-grid" id="family-buttons-container"></div>
-            </div>
+        <div id="member-detail-card" class="card" style="display: none;">
+            <h3 id="view-nickname" style="color: #e91e63;">Biệt danh</h3>
+            <div class="stat-row"><span>Họ tên:</span><strong id="view-fullname">--</strong></div>
+            <div class="stat-row"><span>Ngày sinh:</span><strong id="view-dob">--</strong></div>
+            <div class="stat-row"><span>Nơi sinh:</span><strong id="view-noisinh">--</strong></div>
+            <div class="stat-row"><span>Địa chỉ:</span><strong id="view-diachi">--</strong></div>
+            <div class="stat-row"><span>Mã số thuế:</span><strong id="view-mst">--</strong></div>
+            <div class="stat-row"><span>Số BHYT:</span><strong id="view-bhyt">--</strong></div>
+            
+            <h4 style="margin-top:15px; color:#2196F3;">Căn cước công dân (CCCD)</h4>
+            <div class="stat-row"><span>Số CCCD:</span><strong id="view-cccd-so">--</strong></div>
+            <div class="stat-row"><span>Ngày cấp:</span><strong id="view-cccd-ngay">--</strong></div>
+            <div class="stat-row"><span>Ngày hết hạn:</span><strong id="view-cccd-han">--</strong></div>
+            <div class="stat-row"><span>Nơi cấp:</span><strong id="view-cccd-noi">--</strong></div>
+
+            <h4 style="margin-top:15px; color:#4CAF50;">Hộ chiếu</h4>
+            <div class="stat-row"><span>Số hộ chiếu:</span><strong id="view-hc-so">--</strong></div>
+            <div class="stat-row"><span>Ngày cấp:</span><strong id="view-hc-ngay">--</strong></div>
+            <div class="stat-row"><span>Ngày hết hạn:</span><strong id="view-hc-han">--</strong></div>
+            <div class="stat-row"><span>Nơi cấp:</span><strong id="view-hc-noi">--</strong></div>
+
+            <h4 style="margin-top:15px; color:#FF9800;">Lí lịch tư pháp</h4>
+            <div class="stat-row"><span>Số phiếu:</span><strong id="view-lltp-so">--</strong></div>
+            <div class="stat-row"><span>Ngày cấp:</span><strong id="view-lltp-ngay">--</strong></div>
+            <div class="stat-row"><span>Nơi cấp:</span><strong id="view-lltp-noi">--</strong></div>
         </div>
     </div>
 
@@ -844,15 +865,29 @@
             const amount = parseCurrency(document.getElementById("recur-amount").value);
             const note = document.getElementById("recur-note").value;
 
-            // Lưu đầy đủ cả Type và Subtype vào rule cấu hình
             const rule = { action, type, subtype, day, amount, note: note || "", id: Date.now() };
+            
+            // 1. Lưu vào bộ nhớ máy để chạy offline tự động
             const tx = db.transaction("settings", "readwrite");
             tx.objectStore("settings").put({ key: `rule_${rule.id}`, value: rule });
+            
             tx.oncomplete = () => {
                 document.getElementById("form-recurring").reset();
-                updateRecurringCategories(); // Reset lại danh mục về mặc định
+                updateRecurringCategories();
                 renderRulesList();
                 checkRecurringRules();
+                
+                // 2. Tự động bắn một bản lên Google Sheet để quản lý từ xa nếu có mạng
+                if (navigator.onLine && CONFIG.apiEndpoint) {
+                    fetch(CONFIG.apiEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'backupRecurringRule', rule: rule })
+                    })
+                    .then(res => res.json())
+                    .then(data => console.log("Đã sao lưu cấu hình cố định lên Sheet thành công!"))
+                    .catch(err => console.log("Lỗi sao lưu cấu hình: ", err));
+                }
             };
         }
 
@@ -909,6 +944,81 @@
                 });
             };
         }
+
+        let localFamilyData = []; // Biến lưu trữ tạm dữ liệu gia đình sau khi tải về
+
+        // Hàm tự động gọi lên Google Sheet để lấy dữ liệu thành viên
+        function loadFamilyDataFromSheet() {
+            if (!navigator.onLine || !CONFIG.apiEndpoint) return;
+            
+            // Gọi hàm doGet bằng cách truyền tham số action
+            fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`)
+            .then(res => res.json())
+            .then(resData => {
+                if (resData.status === "success") {
+                    localFamilyData = resData.data;
+                    const selector = document.getElementById("family-selector");
+                    selector.innerHTML = '<option value="">-- Chọn thành viên --</option>';
+                    
+                    // Nạp danh sách Nickname vào thẻ select
+                    localFamilyData.forEach(member => {
+                        let opt = document.createElement("option");
+                        opt.value = member.id;
+                        opt.textContent = member.nickname;
+                        selector.appendChild(opt);
+                    });
+                }
+            })
+            .catch(err => console.log("Lỗi tải dữ liệu Family: ", err));
+        }
+
+        // Hàm hiển thị chi tiết khi chọn một người trong danh sách
+        function displayMemberInfo() {
+            const selectedId = document.getElementById("family-selector").value;
+            const detailCard = document.getElementById("member-detail-card");
+            
+            if (!selectedId) {
+                detailCard.style.display = "none";
+                return;
+            }
+            
+            const member = localFamilyData.find(m => m.id == selectedId);
+            if (!member) return;
+            
+            // Đổ dữ liệu ra giao diện
+            document.getElementById("view-nickname").textContent = member.nickname;
+            document.getElementById("view-fullname").textContent = member.fullname || "--";
+            document.getElementById("view-dob").textContent = member.dob || "--";
+            document.getElementById("view-noisinh").textContent = member.noisinh || "--";
+            document.getElementById("view-diachi").textContent = member.diachi || "--";
+            document.getElementById("view-mst").textContent = member.masothue || "--";
+            document.getElementById("view-bhyt").textContent = member.bhyt || "--";
+            
+            // CCCD
+            document.getElementById("view-cccd-so").textContent = member.cccd.so || "--";
+            document.getElementById("view-cccd-ngay").textContent = member.cccd.ngaycap || "--";
+            document.getElementById("view-cccd-han").textContent = member.cccd.ngayhethan || "--";
+            document.getElementById("view-cccd-noi").textContent = member.cccd.noicap || "--";
+            
+            // Hộ chiếu
+            document.getElementById("view-hc-so").textContent = member.hochieu.so || "--";
+            document.getElementById("view-hc-ngay").textContent = member.hochieu.ngaycap || "--";
+            document.getElementById("view-hc-han").textContent = member.hochieu.ngayhethan || "--";
+            document.getElementById("view-hc-noi").textContent = member.hochieu.noicap || "--";
+            
+            // LLTP
+            document.getElementById("view-lltp-so").textContent = member.lltp.so || "--";
+            document.getElementById("view-lltp-ngay").textContent = member.lltp.ngaycap || "--";
+            document.getElementById("view-lltp-noi").textContent = member.lltp.noicap || "--";
+            
+            detailCard.style.display = "block"; // Hiện khung thông tin
+        }
+
+        // Kích hoạt tự động tải khi mở ứng dụng (bỏ vào hàm khởi tạo chung của bạn)
+        window.addEventListener('DOMContentLoaded', () => {
+            // Chờ DB sẵn sàng rồi gọi tải dữ liệu
+            setTimeout(loadFamilyDataFromSheet, 1000);
+        });
 
         // Xử lý nút cuộn nhanh lên đầu trang (Scroll To Top)
         window.onscroll = function() {
