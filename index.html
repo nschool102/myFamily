@@ -248,44 +248,31 @@
         </div>
     </div>
 
+    <!-- TAB FAMILY -->
     <div id="tab-family" class="tab-content">
         <div class="card">
             <h3>Thành viên gia đình</h3>
-            <div class="form-group">
-                <label>Chọn thành viên để xem thông tin:</label>
-                <select id="family-selector" class="form-control" onchange="displayMemberInfo()">
-                    <option value="">-- Đang tải dữ liệu... --</option>
-                </select>
+            <div id="family-buttons-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+                <p id="family-loading-text">Đang tải dữ liệu từ Google Sheet...</p>
             </div>
         </div>
-
-        <div id="member-detail-card" class="card" style="display: none;">
-            <h3 id="view-nickname" style="color: #e91e63;">Biệt danh</h3>
-            <div class="stat-row"><span>Họ tên:</span><strong id="view-fullname">--</strong></div>
-            <div class="stat-row"><span>Ngày sinh:</span><strong id="view-dob">--</strong></div>
-            <div class="stat-row"><span>Nơi sinh:</span><strong id="view-noisinh">--</strong></div>
-            <div class="stat-row"><span>Địa chỉ:</span><strong id="view-diachi">--</strong></div>
-            <div class="stat-row"><span>Mã số thuế:</span><strong id="view-mst">--</strong></div>
-            <div class="stat-row"><span>Số BHYT:</span><strong id="view-bhyt">--</strong></div>
-            
-            <h4 style="margin-top:15px; color:#2196F3;">Căn cước công dân (CCCD)</h4>
-            <div class="stat-row"><span>Số CCCD:</span><strong id="view-cccd-so">--</strong></div>
-            <div class="stat-row"><span>Ngày cấp:</span><strong id="view-cccd-ngay">--</strong></div>
-            <div class="stat-row"><span>Ngày hết hạn:</span><strong id="view-cccd-han">--</strong></div>
-            <div class="stat-row"><span>Nơi cấp:</span><strong id="view-cccd-noi">--</strong></div>
-
-            <h4 style="margin-top:15px; color:#4CAF50;">Hộ chiếu</h4>
-            <div class="stat-row"><span>Số hộ chiếu:</span><strong id="view-hc-so">--</strong></div>
-            <div class="stat-row"><span>Ngày cấp:</span><strong id="view-hc-ngay">--</strong></div>
-            <div class="stat-row"><span>Ngày hết hạn:</span><strong id="view-hc-han">--</strong></div>
-            <div class="stat-row"><span>Nơi cấp:</span><strong id="view-hc-noi">--</strong></div>
-
-            <h4 style="margin-top:15px; color:#FF9800;">Lí lịch tư pháp</h4>
-            <div class="stat-row"><span>Số phiếu:</span><strong id="view-lltp-so">--</strong></div>
-            <div class="stat-row"><span>Ngày cấp:</span><strong id="view-lltp-ngay">--</strong></div>
-            <div class="stat-row"><span>Nơi cấp:</span><strong id="view-lltp-noi">--</strong></div>
-        </div>
     </div>
+
+    <div id="family-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;">
+        <div class="modal-content" style="background: #1e1e1e; color: #fff; width: 100%; max-width: 500px; max-height: 85vh; border-radius: 12px; padding: 20px; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); box-sizing: border-box;">
+            
+            <span onclick="closeFamilyModal()" style="position: absolute; top: 12px; right: 18px; font-size: 24px; cursor: pointer; color: #aaa;">&times;</span>
+            
+            <h3 id="modal-nickname" style="color: #e91e63; margin-top: 5px; margin-bottom: 15px; padding-right: 20px;">Biệt danh</h3>
+            <p style="font-size: 12px; color: #aaa; margin-top: -10px; margin-bottom: 15px;">* Chạm vào từng dòng để sao chép nhanh giá trị</p>
+
+            <div id="modal-fields-container"></div>
+
+            <button class="btn" id="btn-copy-all" style="background-color: #00bcd4; width: 100%; margin-top: 20px; font-weight: bold;">
+                Sao chép toàn bộ thông tin
+            </button>
+        </div>
+    </div> <!-- end TAB FAMILY -->
 
     <div id="tab-settings" class="tab-content">
         <div class="card">
@@ -945,80 +932,156 @@
             };
         }
 
-        let localFamilyData = []; // Biến lưu trữ tạm dữ liệu gia đình sau khi tải về
+        // XỬ LÍ HIỂN THỊ FAMILY
+        let localFamilyData = []; // Lưu trữ dữ liệu tải từ Sheet về
 
-        // Hàm tự động gọi lên Google Sheet để lấy dữ liệu thành viên
+        // 1. Tự động gọi API lấy dữ liệu thành viên từ Google Sheet
         function loadFamilyDataFromSheet() {
             if (!navigator.onLine || !CONFIG.apiEndpoint) return;
             
-            // Gọi hàm doGet bằng cách truyền tham số action
             fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`)
             .then(res => res.json())
             .then(resData => {
                 if (resData.status === "success") {
                     localFamilyData = resData.data;
-                    const selector = document.getElementById("family-selector");
-                    selector.innerHTML = '<option value="">-- Chọn thành viên --</option>';
-                    
-                    // Nạp danh sách Nickname vào thẻ select
-                    localFamilyData.forEach(member => {
-                        let opt = document.createElement("option");
-                        opt.value = member.id;
-                        opt.textContent = member.nickname;
-                        selector.appendChild(opt);
-                    });
+                    renderFamilyButtons();
                 }
             })
-            .catch(err => console.log("Lỗi tải dữ liệu Family: ", err));
+            .catch(err => {
+                console.log("Lỗi tải dữ liệu Family: ", err);
+                document.getElementById("family-loading-text").textContent = "Không thể tải dữ liệu. Vui lòng kiểm tra mạng.";
+            });
         }
 
-        // Hàm hiển thị chi tiết khi chọn một người trong danh sách
-        function displayMemberInfo() {
-            const selectedId = document.getElementById("family-selector").value;
-            const detailCard = document.getElementById("member-detail-card");
+        // 2. Sinh ra danh sách các Button dựa trên danh sách Nickname
+        function renderFamilyButtons() {
+            const container = document.getElementById("family-buttons-container");
+            container.innerHTML = ""; // Xóa chữ đang tải
             
-            if (!selectedId) {
-                detailCard.style.display = "none";
+            if (localFamilyData.length === 0) {
+                container.innerHTML = "<p>Chưa có dữ liệu thành viên trên tab FAMILY.</p>";
                 return;
             }
             
-            const member = localFamilyData.find(m => m.id == selectedId);
-            if (!member) return;
-            
-            // Đổ dữ liệu ra giao diện
-            document.getElementById("view-nickname").textContent = member.nickname;
-            document.getElementById("view-fullname").textContent = member.fullname || "--";
-            document.getElementById("view-dob").textContent = member.dob || "--";
-            document.getElementById("view-noisinh").textContent = member.noisinh || "--";
-            document.getElementById("view-diachi").textContent = member.diachi || "--";
-            document.getElementById("view-mst").textContent = member.masothue || "--";
-            document.getElementById("view-bhyt").textContent = member.bhyt || "--";
-            
-            // CCCD
-            document.getElementById("view-cccd-so").textContent = member.cccd.so || "--";
-            document.getElementById("view-cccd-ngay").textContent = member.cccd.ngaycap || "--";
-            document.getElementById("view-cccd-han").textContent = member.cccd.ngayhethan || "--";
-            document.getElementById("view-cccd-noi").textContent = member.cccd.noicap || "--";
-            
-            // Hộ chiếu
-            document.getElementById("view-hc-so").textContent = member.hochieu.so || "--";
-            document.getElementById("view-hc-ngay").textContent = member.hochieu.ngaycap || "--";
-            document.getElementById("view-hc-han").textContent = member.hochieu.ngayhethan || "--";
-            document.getElementById("view-hc-noi").textContent = member.hochieu.noicap || "--";
-            
-            // LLTP
-            document.getElementById("view-lltp-so").textContent = member.lltp.so || "--";
-            document.getElementById("view-lltp-ngay").textContent = member.lltp.ngaycap || "--";
-            document.getElementById("view-lltp-noi").textContent = member.lltp.noicap || "--";
-            
-            detailCard.style.display = "block"; // Hiện khung thông tin
+            localFamilyData.forEach(member => {
+                const btn = document.createElement("button");
+                btn.className = "btn";
+                btn.textContent = member.nickname;
+                btn.style.flex = "1 1 calc(50% - 5px)"; // Chia đôi hàng đều nhau trên điện thoại
+                btn.style.minWidth = "120px";
+                btn.style.backgroundColor = "#e91e63"; // Màu hồng đồng bộ với tiêu đề mẫu của bạn
+                
+                // Gắn sự kiện click để mở modal
+                btn.onclick = () => openFamilyModal(member.id);
+                container.appendChild(btn);
+            });
         }
 
-        // Kích hoạt tự động tải khi mở ứng dụng (bỏ vào hàm khởi tạo chung của bạn)
+        // 3. Hàm tiện ích để thực hiện sao chép văn bản và hiển thị thông báo nhanh (Toast)
+        function copyToClipboard(text, fieldName) {
+            if (!text || text === "--") return;
+            navigator.clipboard.writeText(text).then(() => {
+                // Tạo hiệu ứng thông báo toast nhanh nổi lên màn hình
+                alert(`Đã sao chép ${fieldName}: ${text}`);
+            }).catch(err => {
+                console.error("Không thể sao chép: ", err);
+            });
+        }
+
+        // 4. Mở Modal và đổ dữ liệu chi tiết của thành viên được chọn vào
+        function openFamilyModal(memberId) {
+            const member = localFamilyData.find(m => m.id == memberId);
+            if (!member) return;
+            
+            document.getElementById("modal-nickname").textContent = member.nickname;
+            const fieldsContainer = document.getElementById("modal-fields-container");
+            fieldsContainer.innerHTML = ""; // Xóa dữ liệu cũ trong modal
+            
+            // Định nghĩa danh sách cấu trúc các trường thông tin cần hiển thị
+            const fieldMapping = [
+                { label: "Họ tên", value: member.fullname, category: "Thông tin chung" },
+                { label: "Ngày sinh", value: member.dob, category: "Thông tin chung" },
+                { label: "Nơi sinh", value: member.noisinh, category: "Thông tin chung" },
+                { label: "Địa chỉ", value: member.diachi, category: "Thông tin chung" },
+                { label: "Mã số thuế", value: member.masothue, category: "Thông tin chung" },
+                { label: "Số BHYT", value: member.bhyt, category: "Thông tin chung" },
+                
+                { label: "Số CCCD", value: member.cccd.so, category: "Căn cước công dân" },
+                { label: "CCCD Ngày cấp", value: member.cccd.ngaycap, category: "Căn cước công dân" },
+                { label: "CCCD Ngày hết hạn", value: member.cccd.ngayhethan, category: "Căn cước công dân" },
+                { label: "CCCD Nơi cấp", value: member.cccd.noicap, category: "Căn cước công dân" },
+                
+                { label: "Số hộ chiếu", value: member.hochieu.so, category: "Hộ chiếu" },
+                { label: "Hộ chiếu Ngày cấp", value: member.hochieu.ngaycap, category: "Hộ chiếu" },
+                { label: "Hộ chiếu Ngày hết hạn", value: member.hochieu.ngayhethan, category: "Hộ chiếu" },
+                { label: "Hộ chiếu Nơi cấp", value: member.hochieu.noicap, category: "Hộ chiếu" },
+                
+                { label: "Số LLTP", value: member.lltp.so, category: "Lí lịch tư pháp" },
+                { label: "LLTP Ngày cấp", value: member.lltp.ngaycap, category: "Lí lịch tư pháp" },
+                { label: "LLTP Nơi cấp", value: member.lltp.noicap, category: "Lí lịch tư pháp" }
+            ];
+            
+            let currentCategory = "";
+            let fullTextToCopy = `THÔNG TIN THÀNH VIÊN: ${member.nickname}\n`;
+
+            fieldMapping.forEach(field => {
+                const val = field.value || "--";
+                
+                // Thêm tiêu đề nhóm (ví dụ: Căn cước công dân, Hộ chiếu)
+                if (field.category !== currentCategory) {
+                    currentCategory = field.category;
+                    const catHeader = document.createElement("h4");
+                    catHeader.textContent = currentCategory;
+                    catHeader.style.color = "#2196F3";
+                    catHeader.style.marginTop = "15px";
+                    catHeader.style.marginBottom = "5px";
+                    fieldsContainer.appendChild(catHeader);
+                    
+                    fullTextToCopy += `\n[ ${currentCategory.toUpperCase()} ]\n`;
+                }
+                
+                // Tạo dòng dữ liệu hiển thị (Dạng stat-row cũ của bạn)
+                const row = document.createElement("div");
+                row.className = "stat-row";
+                row.style.cursor = "pointer";
+                row.style.padding = "6px 4px";
+                row.style.borderRadius = "4px";
+                row.style.transition = "background 0.2s";
+                row.innerHTML = `<span>${field.label}:</span><strong>${val}</strong>`;
+                
+                // Hiệu ứng đổi màu nền nhẹ khi di chuột/chạm vào để báo hiệu bấm được
+                row.onmouseover = () => row.style.background = "#2a2a2a";
+                row.onmouseout = () => row.style.background = "transparent";
+                
+                // Sự kiện click: Chỉ copy phần giá trị dữ liệu (Bỏ phần nhãn label)
+                row.onclick = () => copyToClipboard(val, field.label);
+                
+                fieldsContainer.appendChild(row);
+                
+                if (val !== "--") {
+                    fullTextToCopy += `${field.label}: ${val}\n`;
+                }
+            });
+            
+            // Gắn sự kiện copy toàn bộ cho button dưới cùng
+            document.getElementById("btn-copy-all").onclick = () => {
+                copyToClipboard(fullTextToCopy, `toàn bộ lý lịch của ${member.nickname}`);
+            };
+            
+            // Hiển thị modal lên màn hình
+            document.getElementById("family-modal").style.display = "flex";
+        }
+
+        // 5. Hàm đóng Modal
+        function closeFamilyModal() {
+            document.getElementById("family-modal").style.display = "none";
+        }
+
+        // Tự động kích hoạt khi tải trang xong
         window.addEventListener('DOMContentLoaded', () => {
-            // Chờ DB sẵn sàng rồi gọi tải dữ liệu
             setTimeout(loadFamilyDataFromSheet, 1000);
         });
+        // end XỬ LÍ HIỂN THỊ FAMILY
 
         // Xử lý nút cuộn nhanh lên đầu trang (Scroll To Top)
         window.onscroll = function() {
