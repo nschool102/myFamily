@@ -1,6 +1,6 @@
 {
-  "name": "Finance PWA Manager",
-  "short_name": "FinancePWA",
+  "name": "Tiền của Tui",
+  "short_name": "Tiền",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
