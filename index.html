@@ -7,6 +7,58 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* ==========================================================================
+   1. KHAI BÁO BIẾN TOÀN CỤC (CSS VARIABLES)
+   ========================================================================== */
+:root {
+    /* Mặc định màu chủ đề ban đầu (Ví dụ: Hồng) */
+    --theme-color: #e91e63;   
+    --text-on-theme: #ffffff; /* Chữ mặc định là màu trắng */
+}
+
+/* ==========================================================================
+   2. BỘ ĐẢO MÀU THÔNG MINH CHO THEME VÀNG (CHỐNG LÓA)
+   ========================================================================== */
+/* Cách 1: Quét theo chuỗi style thuộc tính (Giữ lại từ code của bạn) */
+:root[style*="--theme-color: yellow"],
+:root[style*="--theme-color: #ffff00"],
+:root[style*="--theme-color: #ffeb3b"],
+:root[style*="--theme-color: #ffc107"],
+/* Cách 2: Phòng hờ trường hợp điện thoại đổi mã màu sang dạng RGB hoặc chữ viết hoa */
+:root.theme-yellow {
+    --text-on-theme: #111111; /* Ép toàn bộ chữ trên nút bấm/tiêu đề sang màu tối */
+}
+
+/* ==========================================================================
+   3. ÁP DỤNG BIẾN CHO CÁC THÀNH PHẦN GIAO DIỆN (BUTTON & TEXT)
+   ========================================================================== */
+/* Cấu hình chuẩn cho TẤT CẢ các nút bấm trong ứng dụng */
+.btn {
+    background-color: var(--theme-color) !important;
+    color: var(--text-on-theme) !important;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px; /* Bo góc nhẹ cho nút bấm hiện đại hơn */
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Hiệu ứng nháy nhẹ khi nhấn nút bấm */
+.btn:active {
+    opacity: 0.85;
+    transform: scale(0.98);
+}
+
+/* Áp dụng cho các tiêu đề, icon, hoặc văn bản muốn đổi màu theo màu chủ đề */
+.theme-text {
+    color: var(--theme-color) !important;
+}
+
+/* Tiêu đề biệt danh trong Modal thành viên cũng tự động ăn theo màu nền app */
+#modal-nickname {
+    color: var(--theme-color);
+}
         :root {
             --primary-color: #4CAF50;
             --primary-bg: #ffffff;
@@ -830,16 +882,19 @@
 
         // Settings - Tự động hóa Theme biến động & Khoản chi cố định
         function applyTheme() {
-            const mode = document.getElementById("setting-mode").value;
-            const primaryColor = document.getElementById("setting-color").value;
+            const themeColor = document.getElementById("setting-color")?.value || "#e91e63";
+            const root = document.documentElement;
             
-            document.documentElement.setAttribute("data-theme", mode);
-            document.documentElement.style.setProperty('--primary-color', primaryColor);
+            // 1. Cập nhật biến màu nền toàn cục cho CSS
+            root.style.setProperty('--theme-color', themeColor.toLowerCase());
             
-            if(db) {
-                const tx = db.transaction("settings", "readwrite");
-                tx.objectStore("settings").put({ key: "mode", value: mode });
-                tx.objectStore("settings").put({ key: "color", value: primaryColor });
+            // 2. Kiểm tra nếu chọn màu vàng thì bật Class bảo vệ chống lóa lên, ngược lại thì tắt đi
+            const isYellow = ["yellow", "#ffff00", "#ffeb3b", "#ffc107", "#ffee58"].includes(themeColor.toLowerCase());
+            root.classList.toggle("theme-yellow", isYellow);
+            
+            // 3. Lưu vào bộ nhớ máy IndexedDB
+            if (db) {
+                db.transaction("settings", "readwrite").objectStore("settings").put({ key: "color", value: themeColor });
             }
         }
 
@@ -963,15 +1018,27 @@
                 return;
             }
             
+            // Lấy màu chủ đề hiện tại từ cấu hình hoặc từ giao diện app của bạn
+            // (Giả sử hệ thống của bạn đang dùng một class chung cho nút bấm là "btn")
             localFamilyData.forEach(member => {
                 const btn = document.createElement("button");
-                btn.className = "btn";
-                btn.textContent = member.nickname;
-                btn.style.flex = "1 1 calc(50% - 5px)"; // Chia đôi hàng đều nhau trên điện thoại
-                btn.style.minWidth = "120px";
-                btn.style.backgroundColor = "#e91e63"; // Màu hồng đồng bộ với tiêu đề mẫu của bạn
                 
-                // Gắn sự kiện click để mở modal
+                // Thêm class "btn" chuẩn của app để tự động ăn theo màu nền/màu chữ của Theme hiện tại
+                btn.className = "btn"; 
+                btn.textContent = member.nickname;
+                
+                // Cấu hình layout hiển thị đồng đều
+                btn.style.flex = "1 1 calc(50% - 5px)"; 
+                btn.style.minWidth = "120px";
+                btn.style.margin = "5px 0";
+                
+                /* 
+                   LƯU Ý KHỬ MÀU CỨNG: 
+                   Đã bỏ dòng btn.style.backgroundColor = "#e91e63";
+                   Bây giờ nút bấm sẽ tự động dùng chung màu với nút "Ghi Khoản Chi" hoặc màu cài đặt hệ thống.
+                */
+        
+                // Gắn sự kiện click để mở modal như cũ
                 btn.onclick = () => openFamilyModal(member.id);
                 container.appendChild(btn);
             });
