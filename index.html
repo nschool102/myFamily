@@ -674,25 +674,29 @@ input:checked + .slider:before {
     <!-- TAB FAMILY -->
     <div id="tab-family" class="tab-content" style="display: none;">
     
-        <div id="family-lock-screen" class="card" style="text-align: center; padding: 40px 20px;">
-            <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
-            <h3>Nội dung này được bảo mật</h3>
-            <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">
-                Vui lòng xác thực mật khẩu cấu hình từ Google Sheet để xem thông tin gia đình.
-            </p>
-            <button class="btn" onclick="unlockFamilyTab()" style="width: 100%; max-width: 250px; margin: 0 auto;">
-                🔑 Nhập mật khẩu để xem
-            </button>
+    <div id="family-auth-view" class="card" style="text-align: center; padding: 40px 20px;">
+        <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
+        <h3>Nội dung này được bảo mật</h3>
+        <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">
+            Nhập mật khẩu để xem thông tin gia đình.
+        </p>
+        <div style="margin-bottom: 15px;">
+            <input type="password" id="family-password" placeholder="Nhập mật khẩu..." 
+                   style="padding: 10px; width: 80%; max-width: 250px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; text-align: center;">
         </div>
+        <button class="btn" onclick="verifyFamilyAuth()" style="width: 100%; max-width: 250px; margin: 0 auto;">
+            🔑 Xác thực truy cập
+        </button>
+    </div>
 
-        <div id="family-content" style="display: none;">
-            <div class="card">
-                <h3>Thành viên gia đình</h3>
-                <div id="family-buttons-container"></div>
-            </div>
+    <div id="family-main-view" style="display: none;">
+        <div class="card">
+            <h3>Thành viên gia đình</h3>
+            <div id="family-buttons-container"></div>
         </div>
+    </div>
 
-    </div> <!-- end TAB FAMILY -->
+</div> <!-- end TAB FAMILY -->
 
 
     <!-- TAB SETTINGS -->
@@ -724,7 +728,7 @@ input:checked + .slider:before {
         <div class="card" style="margin-top: 15px;">
             <h3>Dữ liệu & Đồng bộ</h3>
             <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">
-                Cập nhật lại danh mục thu chi và thông tin thành viên mới nhất từ Google Sheet.
+                Cập nhật lại danh mục thu chi và thông tin thành viên mới nhất.
             </p>
             <button class="btn" id="btn-sync-data" onclick="syncAllDataFromSheet()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 🔄 Đồng bộ dữ liệu ngay
@@ -1256,19 +1260,22 @@ input:checked + .slider:before {
         // Hàm kiểm tra trạng thái mở khóa mỗi khi người dùng bấm chuyển tab vào tab Family
         // Bạn hãy tìm hàm điều hướng tab hiện tại của mình (ví dụ: switchTab('family')) và gọi hàm này vào.
         function checkFamilyTabAccess() {
+            // Kiểm tra xem thiết bị này trước đó đã từng mở khóa thành công chưa
             const isUnlocked = localStorage.getItem("family_unlocked") === "true";
             
-            const lockScreen = document.getElementById("family-lock-screen");
-            const actualContent = document.getElementById("family-content");
+            const authView = document.getElementById("family-auth-view");
+            const mainView = document.getElementById("family-main-view");
             
-            if (!lockScreen || !actualContent) return;
+            if (!authView || !mainView) return;
 
             if (isUnlocked) {
-                lockScreen.style.display = "none";
-                actualContent.style.display = "block";
+                authView.style.display = "none";
+                mainView.style.display = "block";
+                // Gọi hàm vẽ giao diện của bạn
+                if (typeof generateFamilyInterface === 'function') generateFamilyInterface();
             } else {
-                lockScreen.style.display = "block";
-                actualContent.style.display = "none";
+                authView.style.display = "block";
+                mainView.style.display = "none";
             }
         }
 
@@ -1322,17 +1329,8 @@ input:checked + .slider:before {
                 })
                 .catch(err => {
                     console.error("Lỗi xác thực tab Family:", err);
-                    alert("Không thể kết nối đến Google Sheet để xác thực lúc này!");
+                    alert("Không thể kết nối để xác thực lúc này!");
                 });
-        }
-
-        // Tạo 7 Button định danh Nickname cho các thành viên
-        const sampleFamily = [
-            { nickname: "Thành viên 1", name: "Nguyễn Văn A", dob: "16/08/1983", pob: "Hồ Chí Minh", address: "Quận 5, TP.HCM", cccd_no: "0123456789", cccd_date: "01/01/2021", cccd_exp: "01/01/2041", cccd_place: "Cục CSQLHC", passport_no: "N123456", passport_date: "01/01/2022", passport_exp: "01/01/2032", passport_place: "Cục XNC", bhyt: "BV12345", tax_id: "80012345", lltp_no: "12/LLTP", lltp_date: "01/01/2025", lltp_place: "Sở Tư Pháp" }
-        ];
-        while(sampleFamily.length < 7) {
-            let i = sampleFamily.length + 1;
-            sampleFamily.push({ nickname: `Nickname ${i}`, name: `Họ tên Thảo ${i}`, dob: "20/10/2014", pob: "Hồ Chí Minh", address: "Quận 5, TP.HCM", cccd_no: "Chưa cấp", cccd_date: "-", cccd_exp: "-", cccd_place: "-", passport_no: "-", passport_date: "-", passport_exp: "-", passport_place: "-", bhyt: "Chưa có", tax_id: "-", lltp_no: "-", lltp_date: "-", lltp_place: "-" });
         }
 
         function generateFamilyInterface() {
