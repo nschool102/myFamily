@@ -84,7 +84,19 @@ body {
     padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold;
     position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+/* SỬA BẰNG CÁCH THÊM NGAY ĐOẠN NÀY VÀO DƯỚI NÓ */
+[data-theme="dark"] .header {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid #333333;
+}
 
+/* Riêng cho trường hợp bạn chọn màu vàng ở chế độ tối để không bị lóa */
+[data-theme="dark"].theme-yellow .header {
+    background-color: #ffeb3b !important;
+    color: #111111 !important;
+}
+        
 .nav-tabs {
     position: fixed; bottom: 0; left: 0; width: 100%;
     background-color: var(--nav-bg); display: flex;
