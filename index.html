@@ -1296,7 +1296,7 @@ input:checked + .slider:before {
             });
         }
 
-        function resetAppCompletely() {
+        /*function resetAppCompletely() {
             if (!confirm("Xóa toàn bộ lịch sử thiết bị?")) return;
             const userPassword = prompt("🔒 Nhập mật khẩu xác nhận:");
             if (!userPassword) return;
@@ -1308,8 +1308,61 @@ input:checked + .slider:before {
                         alert("🗑️ Đã reset!"); window.location.reload(true); 
                     } else alert("❌ Mật khẩu sai!");
                 }).catch(() => { alert("Lỗi kết nối!"); });
+        }*/
+        function resetAppCompletely() {
+            if (!confirm("⚠️ Bạn có chắc chắn muốn xóa toàn bộ lịch sử thiết bị không?\nHành động này không thể hoàn tác!")) return;
+            
+            // Tạo nhanh một giao diện nhập mật khẩu bảo mật ẩn danh
+            let userPassword = prompt("🔒 Nhập mật khẩu xác nhận (Lưu ý: Trình duyệt mặc định sẽ hiển thị ký tự này):");
+            
+            // NẾU BẠN MUỐN ẨN HOÀN TOÀN MẬT KHẨU (DẠNG DAU CHẤM ••••)
+            // Hãy dùng đoạn code tạo Box xác thực chuyên nghiệp này thay cho lệnh prompt cũ:
+            const securePrompt = () => {
+                let mask = document.createElement('div');
+                mask.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;justify-content:center;align-items:center;";
+                
+                let box = document.createElement('div');
+                box.className = "card";
+                box.style = "width:90%;max-width:320px;padding:20px;text-align:center;background:var(--card-bg);color:var(--text-color);";
+                box.innerHTML = `
+                    <h3 style="margin-top:0;color:var(--danger-color);">🔒 Xác Thực Xóa App</h3>
+                    <p style="font-size:13px;opacity:0.8;">Vui lòng nhập mật khẩu xác nhận định danh:</p>
+                    <input type="password" id="secure-reset-pass" class="form-control" style="text-align:center;margin-bottom:15px;" placeholder="••••••••">
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn" id="btn-cancel-reset" style="background:#555 !important;flex:1;">Hủy</button>
+                        <button class="btn" id="btn-confirm-reset" style="background:var(--danger-color) !important;flex:1;">Xóa Sạch</button>
+                    </div>
+                `;
+                
+                mask.appendChild(box);
+                document.body.appendChild(mask);
+                
+                document.getElementById("secure-reset-pass").focus();
+                
+                document.getElementById("btn-cancel-reset").onclick = () => mask.remove();
+                
+                document.getElementById("btn-confirm-reset").onclick = () => {
+                    const passVal = document.getElementById("secure-reset-pass").value;
+                    if (!passVal.trim()) { alert("Vui lòng không để trống mật khẩu!"); return; }
+                    
+                    fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(passVal.trim())}`)
+                        .then(res => res.json())
+                        .then(res => {
+                            if (res.status === "success" && res.match === true) {
+                                mask.remove();
+                                localStorage.clear(); 
+                                if (window.indexedDB) indexedDB.deleteDatabase("FamilyFinancePWA");
+                                alert("🗑️ Đã xóa sạch dữ liệu thiết bị và đặt lại ứng dụng thành công!"); 
+                                window.location.reload(true); 
+                            } else {
+                                alert("❌ Mật khẩu xác nhận không chính xác!");
+                            }
+                        }).catch(() => { alert("Lỗi kết nối đến máy chủ xác thực!"); });
+                };
+            };
+            
+            securePrompt();
         }
-
         window.onscroll = function() {
             const btn = document.getElementById("scrollTopBtn");
             if(btn) btn.style.display = (document.body.scrollTop > 250 || document.documentElement.scrollTop > 250) ? "flex" : "none";
