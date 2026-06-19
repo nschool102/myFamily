@@ -1325,7 +1325,7 @@ input:checked + .slider:before {
                 });
             };
         }
-
+        /* 1.1. thay thế cái này 
         function syncAllDataFromSheet() {
             if (!navigator.onLine) { alert("Thiết bị đang ngoại tuyến!"); return; }
             const syncBtn = document.getElementById("btn-sync-data"); const originalText = syncBtn.innerHTML;
@@ -1351,8 +1351,126 @@ input:checked + .slider:before {
                 syncBtn.disabled = false; syncBtn.innerHTML = originalText; syncBtn.style.opacity = "1";
                 initFormOptions(); updateRecurringCategories(); renderChartsAndStats();
             });
+        }*/
+        /*1.1. bằng cái này*/
+        function syncAllDataFromSheet() {
+            if (!navigator.onLine) { alert("Thiết bị đang ngoại tuyến!"); return; }
+            const syncBtn = document.getElementById("btn-sync-data"); 
+            const originalText = syncBtn.innerHTML;
+            
+            syncBtn.disabled = true; 
+            syncBtn.innerHTML = "⏳ Đang đồng bộ toàn diện..."; 
+            syncBtn.style.opacity = "0.7";
+        
+            // BƯỚC 1: Đẩy tất cả giao dịch cục bộ chưa đồng bộ (synced === 0) lên trước
+            getAllTransactions(localTransactions => {
+                const unsynced = localTransactions.filter(t => t.synced === 0);
+                
+                const proceedToDownload = () => {
+                    // BƯỚC 2: Tải dữ liệu tổng hợp từ Google Sheets về (Bao gồm Family, Thu Chi, Định Kỳ)
+                    // LƯU Ý: Phía Apps Script cần hỗ trợ trả về cả 3 mảng dữ liệu này trong một lượt gọi action=getAllAppData
+                    fetch(`${CONFIG.apiEndpoint}?action=getAllAppData`)
+                    .then(res => res.json())
+                    .then(resData => {
+                        if (resData.status === "success" && resData.data) {
+                            const serverFamily = resData.data.family || [];
+                            const serverTransactions = resData.data.transactions || [];
+                            const serverRules = resData.data.recurringRules || [];
+        
+                            // 2.1 Cập nhật thông tin gia đình vào bộ nhớ máy
+                            localFamilyData = serverFamily;
+                            if (db) db.transaction("settings", "readwrite").objectStore("settings").put({ key: "family_data", value: serverFamily });
+        
+                            // 2.2 Xử lý gộp Thu/Chi, kiểm soát TRÁNH TRÙNG LẮP bằng cách so sánh timestamp + amount
+                            if (db && serverTransactions.length > 0) {
+                                const tx = db.transaction("transactions", "readwrite");
+                                const store = tx.objectStore("transactions");
+                                
+                                serverTransactions.forEach(sTx => {
+                                    // Kiểm tra xem dưới máy đã có giao dịch nào trùng khít thời gian và số tiền chưa
+                                    const isDuplicate = localTransactions.some(lTx => 
+                                        lTx.timestamp === sTx.timestamp && 
+                                        parseFloat(lTx.amount) === parseFloat(sTx.amount)
+                                    );
+                                    
+                                    if (!isDuplicate) {
+                                        // Nếu không trùng, ép trạng thái synced = 1 vì dữ liệu này lấy từ server về
+                                        sTx.synced = 1; 
+                                        store.add(sTx);
+                                    }
+                                });
+                            }
+        
+                            // 2.3 Xử lý gộp Cấu hình định kỳ, tránh trùng lắp theo Rule ID
+                            if (db && serverRules.length > 0) {
+                                const txSettings = db.transaction("settings", "readwrite");
+                                const storeSettings = txSettings.objectStore("settings");
+                                
+                                // Lấy danh sách các rule hiện tại dưới máy để đối chiếu
+                                storeSettings.getAll().onsuccess = function(e) {
+                                    const localItems = e.target.result || [];
+                                    serverRules.forEach(sRule => {
+                                        const ruleKey = `rule_${sRule.id}`;
+                                        const isRuleExist = localItems.some(item => item.key === ruleKey);
+                                        
+                                        if (!isRuleExist) {
+                                            storeSettings.put({ key: ruleKey, value: sRule });
+                                        }
+                                    });
+                                    renderRulesList(); // Cập nhật lại giao diện định kỳ
+                                };
+                            }
+        
+                            // 2.4 Lưu thời gian đồng bộ thành công gần nhất
+                            const now = new Date();
+                            const timeString = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                            if(document.getElementById("sync-status")) document.getElementById("sync-status").innerHTML = `Last sync: ${timeString}`;
+                            if (db) db.transaction("settings", "readwrite").objectStore("settings").put({ key: "last_sync_time", value: timeString });
+                            
+                            alert("✅ Đồng bộ thành công! Đã cập nhật Thu/Chi, Định kỳ và Lý lịch gia đình mới nhất, tự động loại bỏ trùng lặp.");
+                        } else {
+                            alert("⚠️ Đồng bộ xong nhưng định dạng dữ liệu phản hồi từ Sheet không đúng.");
+                        }
+                    })
+                    .catch(() => { 
+                        alert("❌ Lỗi kết nối! Không thể tải dữ liệu từ Google Sheet xuống."); 
+                    })
+                    .finally(() => {
+                        syncBtn.disabled = false; 
+                        syncBtn.innerHTML = originalText; 
+                        syncBtn.style.opacity = "1";
+                        // Khởi tạo và vẽ lại toàn bộ bảng biểu lịch sử với dữ liệu mới
+                        initFormOptions(); 
+                        updateRecurringCategories(); 
+                        renderChartsAndStats();
+                    });
+                };
+        
+                // Nếu có dữ liệu chưa đồng bộ lên, đẩy lên trước rồi mới tải về sau
+                if (unsynced.length > 0 && CONFIG.apiEndpoint) {
+                    fetch(CONFIG.apiEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'syncTransactions', data: unsynced })
+                    })
+                    .then(res => res.json())
+                    .then(resData => {
+                        if (resData.status === "success") {
+                            const tx = db.transaction("transactions", "readwrite");
+                            const store = tx.objectStore("transactions");
+                            unsynced.forEach(t => { t.synced = 1; store.put(t); });
+                        }
+                        proceedToDownload();
+                    })
+                    .catch(() => {
+                        // Nếu đẩy lên lỗi (nghẽn mạng giữa chừng), vẫn cố gắng chạy tải dữ liệu về
+                        proceedToDownload();
+                    });
+                } else {
+                    proceedToDownload();
+                }
+            });
         }
-
         /*function resetAppCompletely() {
             if (!confirm("Xóa toàn bộ lịch sử thiết bị?")) return;
             const userPassword = prompt("🔒 Nhập mật khẩu xác nhận:");
