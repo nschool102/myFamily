@@ -743,6 +743,7 @@ input:checked + .slider:before {
             <button class="btn" id="btn-sync-data" onclick="syncAllDataFromSheet()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 🔄 Đồng bộ dữ liệu ngay
             </button>
+            <div id="sync-status" style="font-size: 12px; color: #aaa; margin-top: 8px; text-align: center;"></div>
             <button class="btn" onclick="resetAppCompletely()" style="background-color: #F44336 !important; color: #fff !important; width: 100%; margin-top: 10px;">
                 🗑️ Xóa sạch dữ liệu & Đặt lại App
             </button>
@@ -800,11 +801,11 @@ input:checked + .slider:before {
         };
 
         // PARSE TỪ SHEET DANH MỤC THỰC TẾ TRONG HÌNH ẢNH CỦA BẠN
-        const CATEGORIES = {
+        let CATEGORIES = {
             thu: {
                 "Bất thường": ["Tặng, cho", "Trúng Vietlott"],
                 "Thu khác": ["Bảo hiểm refund"],
-                "Lương": ["Bổ sung lương", "Công tác phí", "Hoàn thuế", "Lương tháng", "Trực lễ tết"],
+                "Lương": ["Bổ sung lương", "Công tác phí", "Hoàn thuế", "Lương tháng", "Trực lễ tết", "Lương ứng"],
                 "Phụ cấp": ["Phụ cấp vệ sinh viên"],
                 "Phúc lợi": ["HSG", "Phụ nữ", "Sinh nhật", "Thiếu nhi"],
                 "Thưởng": ["Bất thường", "Bổ sung thưởng", "Thưởng lễ tết", "Thưởng năm", "Thưởng quý"],
@@ -1559,30 +1560,53 @@ input:checked + .slider:before {
             .then(([catRes, famRes]) => {
                 let successMessage = "";
 
-                if (catRes.status === "success") {
-                    if (typeof localCategories !== 'undefined') {
-                        localCategories = catRes.data;
-                    }
+                // (Giữ nguyên các logic xử lý catRes và famRes của bạn ở đây...)
+                if (catRes.status === "success" && catRes.data) {
+                    CATEGORIES = catRes.data;
                     if (db) {
                         const tx = db.transaction("settings", "readwrite");
                         tx.objectStore("settings").put({ key: "categories", value: catRes.data });
                     }
-                    if (typeof updateCategoryDropdowns === 'function') {
-                        updateCategoryDropdowns(catRes.data);
-                    } else if (typeof loadCategories === 'function') {
-                        loadCategories(); 
-                    }
-                    successMessage += "✅ Đã cập nhật Danh mục mới.\n";
+                    initFormOptions();
+                    updateRecurringCategories();
+                    successMessage += "✅ Đã cập nhật Danh mục mới từ Sheet.\n";
                 }
 
                 if (famRes.status === "success") {
                     localFamilyData = famRes.data;
-                    renderFamilyButtons();
+                    if (typeof renderFamilyButtons === 'function') {
+                        renderFamilyButtons();
+                    }
                     successMessage += "✅ Đã cập nhật Thông tin gia đình.";
                 }
 
-                if (successMessage) alert(successMessage);
-                else alert("Đồng bộ hoàn thành nhưng không có dữ liệu nào thay đổi.");
+                if (successMessage) {
+                    // --- ĐOẠN THÊM MỚI: TẠO CHUỖI THỜI GIAN dd/mm/yyyy hh:mm:ss ---
+                    const now = new Date();
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const year = now.getFullYear();
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const seconds = String(now.getSeconds()).padStart(2, '0');
+                    
+                    const timeString = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+                    
+                    // Hiển thị lên giao diện
+                    const statusDiv = document.getElementById("sync-status");
+                    if (statusDiv) statusDiv.innerHTML = `Last sync: ${timeString}`;
+                    
+                    // Lưu lại vào IndexedDB để khi tắt app mở lại vẫn còn chữ này
+                    if (db) {
+                        const tx = db.transaction("settings", "readwrite");
+                        tx.objectStore("settings").put({ key: "last_sync_time", value: timeString });
+                    }
+                    // -------------------------------------------------------------
+
+                    alert(successMessage);
+                } else {
+                    alert("Đồng bộ hoàn thành nhưng không có dữ liệu nào thay đổi.");
+                }
             })
             .catch(err => {
                 console.error("Lỗi đồng bộ tổng thể:", err);
@@ -1608,16 +1632,29 @@ input:checked + .slider:before {
 
         function loadInitialSettings() {
             db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
+                // Đọc danh mục đã lưu
+                const savedCategories = e.target.result.find(item => item.key === "categories");
+                if (savedCategories && savedCategories.value) {
+                    CATEGORIES = savedCategories.value;
+                }
+
+                // Đọc thời gian đồng bộ cuối đã lưu
+                const lastSync = e.target.result.find(item => item.key === "last_sync_time");
+                if (lastSync && lastSync.value) {
+                    const statusDiv = document.getElementById("sync-status");
+                    if (statusDiv) statusDiv.innerHTML = `Last sync: ${lastSync.value}`;
+                }
+
                 e.target.result.forEach(item => {
-                    if(item.key === "mode" && document.getElementById("setting-mode")) document.getElementById("setting-mode").value = item.value;
-                    if(item.key === "color" && document.getElementById("setting-color")) document.getElementById("setting-color").value = item.value;
+                    if(item.key === "mode") document.getElementById("setting-mode").value = item.value;
+                    if(item.key === "color") document.getElementById("setting-color").value = item.value;
                 });
+                
                 loadTheme();
                 initFormOptions();
                 updateRecurringCategories();
                 renderRulesList();
                 renderChartsAndStats();
-                loadTransactionHistory();
             };
         }
 
