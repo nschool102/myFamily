@@ -1564,30 +1564,30 @@ input:checked + .slider:before {
                 alert("Chưa cấu hình API URL (apiEndpoint) trong cài đặt!");
                 return;
             }
-
+        
             const syncBtn = document.getElementById("btn-sync-data");
             const originalText = syncBtn.innerHTML;
             
             syncBtn.disabled = true;
             syncBtn.innerHTML = "⏳ Đang đồng bộ...";
             syncBtn.style.opacity = "0.7";
-
+        
             const syncCategories = fetch(`${CONFIG.apiEndpoint}?action=getCategories`).then(res => res.json());
             const syncFamily = fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`).then(res => res.json());
-
+        
             Promise.all([syncCategories, syncFamily])
             .then(([catRes, famRes]) => {
                 let successMessage = "";
-
-                if (catRes.status === "success" && catRes.data) {
-                    CATEGORIES = catRes.data;
+        
+                if (catRes.status === "success" && catRes.data && Object.keys(catRes.data).length > 0) {
+                    CATEGORIES = catRes.data; 
                     if (db) {
                         const tx = db.transaction("settings", "readwrite");
                         tx.objectStore("settings").put({ key: "categories", value: catRes.data });
                     }
                     successMessage += "✅ Đã cập nhật Danh mục mới từ Sheet.\n";
                 }
-
+        
                 if (famRes.status === "success" && famRes.data) {
                     localFamilyData = famRes.data;
                     if (db) {
@@ -1596,16 +1596,10 @@ input:checked + .slider:before {
                     }
                     successMessage += "✅ Đã cập nhật Thông tin gia đình.";
                 }
-
+        
                 if (successMessage) {
                     const now = new Date();
-                    const day = String(now.getDate()).padStart(2, '0');
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const year = now.getFullYear();
-                    const hours = String(now.getHours()).padStart(2, '0');
-                    const minutes = String(now.getMinutes()).padStart(2, '0');
-                    const seconds = String(now.getSeconds()).padStart(2, '0');
-                    const timeString = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+                    const timeString = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                     
                     const statusDiv = document.getElementById("sync-status");
                     if (statusDiv) statusDiv.innerHTML = `Last sync: ${timeString}`;
@@ -1614,21 +1608,22 @@ input:checked + .slider:before {
                         const tx = db.transaction("settings", "readwrite");
                         tx.objectStore("settings").put({ key: "last_sync_time", value: timeString });
                     }
-
                     alert(successMessage);
                 } else {
-                    alert("Đồng bộ hoàn thành nhưng không có dữ liệu nào thay đổi.");
+                    alert("⚠️ Đồng bộ xong nhưng dữ liệu trống. Danh mục cũ được giữ an toàn.");
                 }
             })
             .catch(err => {
-                console.error("Lỗi đồng bộ tổng thể:", err);
-                alert("Đồng bộ thất bại! Vui lòng kiểm tra lại mạng hoặc URL Apps Script.");
+                console.error("Lỗi đồng bộ:", err);
+                alert("Đồng bộ thất bại! Kiểm tra kết nối mạng hoặc Apps Script.");
             })
             .finally(() => {
                 syncBtn.disabled = false;
                 syncBtn.innerHTML = originalText;
                 syncBtn.style.opacity = "1";
-                initFormOptions(); // Buộc render lại cấu trúc form sau khi đồng bộ
+                
+                // PHẢI LUÔN VẼ LẠI FORM SAU KHI ĐỒNG BỘ XONG
+                initFormOptions(); 
                 updateRecurringCategories();
                 renderChartsAndStats();
             });
@@ -1667,39 +1662,64 @@ input:checked + .slider:before {
         };
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-        // ĐÃ SỬA: Đồng bộ hóa tiến trình đọc dữ liệu cũ để tránh bất đồng bộ trống select box
         function loadInitialSettings() {
-            db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
-                const savedCategories = e.target.result.find(item => item.key === "categories");
-                if (savedCategories && savedCategories.value) {
-                    CATEGORIES = savedCategories.value;
-                }
-
-                const savedFamily = e.target.result.find(item => item.key === "family_data");
-                if (savedFamily && savedFamily.value) {
-                    localFamilyData = savedFamily.value;
-                }
-
-                const lastSync = e.target.result.find(item => item.key === "last_sync_time");
-                if (lastSync && lastSync.value) {
-                    const statusDiv = document.getElementById("sync-status");
-                    if (statusDiv) statusDiv.innerHTML = `Last sync: ${lastSync.value}`;
-                }
-
-                e.target.result.forEach(item => {
-                    if(item.key === "color") {
-                        const cSelect = document.getElementById("setting-color");
-                        if(cSelect) cSelect.value = item.value;
+            if (!db) return;
+            
+            try {
+                const tx = db.transaction("settings", "readonly");
+                const store = tx.objectStore("settings");
+                const request = store.getAll();
+        
+                request.onsuccess = function(e) {
+                    const results = e.target.result || [];
+                    
+                    // 1. Nạp danh mục (Categories) an toàn
+                    const savedCategories = results.find(item => item.key === "categories");
+                    if (savedCategories && savedCategories.value && Object.keys(savedCategories.value).length > 0) {
+                        CATEGORIES = savedCategories.value;
                     }
-                });
-                
-                // Khởi động các hàm giao diện TUẦN TỰ sau khi gán biến hoàn tất
-                loadTheme();
+        
+                    // 2. Nạp dữ liệu gia đình
+                    const savedFamily = results.find(item => item.key === "family_data");
+                    if (savedFamily && savedFamily.value) {
+                        localFamilyData = savedFamily.value;
+                    }
+        
+                    // 3. Nạp thời gian đồng bộ cuối (Last sync) bọc trong try/catch độc lập
+                    try {
+                        const lastSync = results.find(item => item.key === "last_sync_time");
+                        const statusDiv = document.getElementById("sync-status");
+                        if (lastSync && lastSync.value && statusDiv) {
+                            statusDiv.innerHTML = `Last sync: ${lastSync.value}`;
+                        }
+                    } catch (errSync) {
+                        console.error("Lỗi hiển thị log sync:", errSync);
+                    }
+        
+                    // 4. Tìm cấu hình màu sắc
+                    const savedColor = results.find(item => item.key === "color");
+                    if (savedColor && savedColor.value) {
+                        const cSelect = document.getElementById("setting-color");
+                        if (cSelect) cSelect.value = savedColor.value;
+                    }
+                    
+                    // ĐẢM BẢO LUÔN LUÔN CHẠY GIAO DIỆN KHÔNG BỊ CHẶN LẠI
+                    loadTheme();
+                    initFormOptions();
+                    updateRecurringCategories();
+                    renderRulesList();
+                    renderChartsAndStats();
+                };
+        
+                request.onerror = function() {
+                    // Cứu nguy: Nếu lấy dữ liệu lỗi, vẫn kích hoạt form với danh mục mặc định
+                    initFormOptions();
+                };
+            } catch (err) {
+                console.error("Lỗi sập luồng khởi tạo settings:", err);
                 initFormOptions();
-                updateRecurringCategories();
-                renderRulesList();
-                renderChartsAndStats();
-            };
+                loadTheme();
+            }
         }
 
         window.onload = function() { initDB(); };
