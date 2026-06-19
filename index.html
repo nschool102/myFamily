@@ -594,7 +594,7 @@ input:checked + .slider:before {
             <div id="top-expenses-list"></div>
         </div>
         <div class="card">
-            <h3>Lịch sử Khoản Chi (20 giao dịch gần nhất)</h3>
+            <h3>Lịch sử Chi</h3>
             <div id="expense-history-container">Đang tải lịch sử chi...</div>
         </div>
     </div>
@@ -628,7 +628,7 @@ input:checked + .slider:before {
             </form>
         </div>
         <div class="card">
-            <h3>Lịch sử Khoản Thu (20 giao dịch gần nhất)</h3>
+            <h3>Lịch sử Thu</h3>
             <div id="income-history-container">Đang tải lịch sử thu...</div>
         </div>
     </div>
@@ -736,7 +736,7 @@ input:checked + .slider:before {
         <div class="card">
             <h3>Dữ liệu & Đồng bộ</h3>
             <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">Cập nhật thông tin thành viên gia đình mới nhất.</p>
-            <button class="btn" id="btn-sync-data" onclick="syncAllDataFromSheet()">🔄 Đồng bộ thông tin gia đình</button>
+            <button class="btn" id="btn-sync-data" onclick="syncAllDataFromSheet()">🔄 Đồng bộ dữ liệu</button>
             <div id="sync-status" style="font-size: 12px; color: #aaa; margin-top: 8px; text-align: center;"></div>
             
             <button class="btn" onclick="resetAppCompletely()" style="background-color: #F44336 !important; color: #fff !important; width: 100%; margin-top: 15px;">🗑️ Xóa sạch dữ liệu & Đặt lại App</button>
@@ -762,7 +762,7 @@ input:checked + .slider:before {
                 </div>
                 <div class="form-group">
                     <label>Ngày thực hiện (1-31 hàng tháng)</label>
-                    <input type="number" id="recur-day" class="form-control" min="1" max="31" placeholder="Ví dụ: 5" required>
+                    <input type="number" inputmode="numeric" id="recur-day" class="form-control" min="1" max="31" placeholder="Ví dụ: 5" required>
                 </div>
                 <div class="form-group">
                     <label>Số tiền (VND)</label>
