@@ -1232,7 +1232,7 @@ input:checked + .slider:before {
             let savedColor = localStorage.getItem('themeColor');
             if (savedColor) { if(document.getElementById("setting-color")) document.getElementById("setting-color").value = savedColor; applyTheme(); }
         }
-
+        /* thay cái này  
         function addRecurringRule(e) {
             e.preventDefault();
             const action = document.getElementById("recur-action-type").value, type = document.getElementById("recur-type").value, subtype = document.getElementById("recur-subtype").value, day = parseInt(document.getElementById("recur-day").value), amount = parseCurrency(document.getElementById("recur-amount").value), note = document.getElementById("recur-note").value;
@@ -1240,15 +1240,72 @@ input:checked + .slider:before {
             db.transaction("settings", "readwrite").objectStore("settings").put({ key: `rule_${rule.id}`, value: rule }).oncomplete = () => {
                 document.getElementById("form-recurring").reset(); updateRecurringCategories(); renderRulesList(); checkRecurringRules();
             };
+        } */
+        /* bằng cái này */
+        function addRecurringRule(e) {
+            e.preventDefault();
+            const action = document.getElementById("recur-action-type").value;
+            const type = document.getElementById("recur-type").value;
+            const subtype = document.getElementById("recur-subtype").value;
+            const day = parseInt(document.getElementById("recur-day").value);
+            const amount = parseCurrency(document.getElementById("recur-amount").value);
+            const note = document.getElementById("recur-note").value;
+            
+            const rule = { action, type, subtype, day, amount, note: note || "", id: Date.now() };
+            
+            const tx = db.transaction("settings", "readwrite");
+            const store = tx.objectStore("settings");
+            
+            store.put({ key: `rule_${rule.id}`, value: rule });
+            
+            tx.oncomplete = function() {
+                alert("✅ Đã lưu cấu hình tự động thành công!");
+                document.getElementById("form-recurring").reset(); 
+                updateRecurringCategories(); 
+                renderRulesList(); // Gọi lại hàm cập nhật danh sách hiển thị
+                checkRecurringRules(); // Chạy kiểm tra để chèn luôn nếu tới ngày
+            };
         }
-
+        /* rồi thay tiếp cái này 
         function renderRulesList() {
             if(!db) return; const container = document.getElementById("recurring-rules-list"); if(!container) return; container.innerHTML = "<h4>Khoản tự động đã cấu hình:</h4>";
             db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
                 e.target.result.forEach(item => { if(item.key.startsWith("rule_")) container.innerHTML += `<div class="stat-row"><span>Ngày ${item.value.day}: [${item.value.action.toUpperCase()}] ${item.value.type} -> ${item.value.subtype}</span><strong>${formatVND(item.value.amount)}</strong></div>`; });
             };
+        }*/
+        /* bằng cái này */
+        function renderRulesList() {
+            if (!db) return; 
+            const container = document.getElementById("recurring-rules-list"); 
+            if (!container) return; 
+            
+            container.innerHTML = "<h4 style='margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:5px;'>Khoản tự động đã cấu hình:</h4>";
+            
+            db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
+                const items = e.target.result || [];
+                const rules = items.filter(item => item.key && item.key.startsWith("rule_"));
+                
+                if (rules.length === 0) {
+                    container.innerHTML += "<p style='color:#aaa; font-size:13px;'>Chưa có cấu hình tự động nào được tạo.</p>";
+                    return;
+                }
+                
+                rules.forEach(item => { 
+                    const r = item.value;
+                    const badgeColor = r.action === 'chi' ? 'var(--danger-color)' : 'var(--success-color)';
+                    container.innerHTML += `
+                        <div class="stat-row" style="padding: 12px 0;">
+                            <span>
+                                <b style="color:${badgeColor}">[${r.action.toUpperCase()}]</b> 
+                                Ngày ${r.day} hàng tháng: ${r.type} → ${r.subtype} 
+                                ${r.note ? `<br><small style="color:#aaa;"><i>* Ghi chú: ${r.note}</i></small>` : ''}
+                            </span>
+                            <strong style="color:${badgeColor}">${formatVND(r.amount)}</strong>
+                        </div>`; 
+                });
+            };
         }
-
+        
         function checkRecurringRules() {
             if(!db) return; const today = new Date(), currentDay = today.getDate();
             db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
@@ -1369,6 +1426,7 @@ input:checked + .slider:before {
         };
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
+        /* rồi lại thay cái này
         function loadInitialSettings() {
             db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
                 const results = e.target.result || [];
@@ -1382,6 +1440,23 @@ input:checked + .slider:before {
                 initFormOptions(); 
                 updateRecurringCategories();
                 renderRulesList();
+                renderChartsAndStats();
+            };
+        }*/
+        /* bằng cái này*/
+        function loadInitialSettings() {
+            db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
+                const results = e.target.result || [];
+                const savedFamily = results.find(item => item.key === "family_data");
+                if (savedFamily) localFamilyData = savedFamily.value;
+        
+                const lastSync = results.find(item => item.key === "last_sync_time");
+                if (lastSync && document.getElementById("sync-status")) document.getElementById("sync-status").innerHTML = `Last sync: ${lastSync.value}`;
+        
+                loadTheme();
+                initFormOptions(); 
+                updateRecurringCategories();
+                renderRulesList(); // Đảm bảo luôn kích hoạt hiển thị danh sách khi vào app
                 renderChartsAndStats();
             };
         }
