@@ -649,8 +649,8 @@ input:checked + .slider:before {
 
         <div class="card">
             <h3>Section 3: Tỷ Lệ Nguồn Thu</h3>
-            <div class="stat-row"><span>A (CON CỢP):</span><strong id="sec3-a">0</strong></div>
-            <div class="stat-row"><span>B (MÌNH):</span><strong id="sec3-b">0</strong></div>
+            <div class="stat-row"><span>A (MÌNH):</span><strong id="sec3-Mine">0</strong></div>
+            <div class="stat-row"><span>B (CON CỢP):</span><strong id="sec3-Tiger">0</strong></div>
             <div class="chart-container">
                 <canvas id="chart-sec3-pie"></canvas>
             </div>
@@ -1034,7 +1034,7 @@ input:checked + .slider:before {
                 let curMonthChi = 0, prevMonthChi = 0;
                 let catCurrentMonth = { "Tổng": 0, "Ăn uống": 0, "Đồ chơi": 0, "Mỹ phẩm": 0, "Quần áo": 0 };
                 let catPrevMonth = { "Tổng": 0, "Ăn uống": 0, "Đồ chơi": 0, "Mỹ phẩm": 0, "Quần áo": 0 };
-                let sumA_Tiger = 0, sumB_Salary = 0;
+                let sum_Tiger = 0, sum_Mine = 0;
 
                 const now = new Date();
                 const cM = now.getMonth(), cY = now.getFullYear();
@@ -1048,8 +1048,8 @@ input:checked + .slider:before {
                     else totalChi += Math.abs(amt);
 
                     if (amt > 0) {
-                        if (t.type === "CON CỢP") sumA_Tiger += amt;
-                        if (t.type === "Lương" || t.type === "Thưởng") sumB_Salary += amt;
+                        if (t.type === "CON CỢP") sum_Tiger += amt;
+                        if (t.type === "Lương" || t.type === "Thưởng") sum_Mine += amt;
                     }
 
                     // Xử lý Section 1: Thuật toán so sánh tháng hiện tại và tháng trước
@@ -1094,9 +1094,9 @@ input:checked + .slider:before {
                 renderPieChart('chart-sec2-pie', ['Tổng Thu', 'Tổng Chi'], [totalThu, totalChi]);
 
                 // Section 3 render
-                document.getElementById("sec3-a").textContent = formatVND(sumA_Tiger);
-                document.getElementById("sec3-b").textContent = formatVND(sumB_Salary);
-                renderPieChart('chart-sec3-pie', ['A (CON CỢP)', 'B (MÌNH)'], [sumA_Tiger, sumB_Salary]);
+                document.getElementById("sec3-Tiger").textContent = formatVND(sum_Tiger);
+                document.getElementById("sec3-Mine").textContent = formatVND(sum_Mine);
+                renderPieChart('chart-sec3-pie', ['A (MÌNH)', 'B (CON CỢP)'], [sum_Mine, sum_Tiger]);
 
                 // Section 4 render
                 renderSection4(data);
