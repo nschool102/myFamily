@@ -1309,6 +1309,7 @@ input:checked + .slider:before {
             fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(inputPass.trim())}`)
                 .then(res => res.json())
                 .then(res => {
+                    console.log("Kết quả từ Google Sheet:", res);
                     if (res.status === "success" && res.match === true) {
                         // 1. Nhập đúng -> Lưu trạng thái đã mở khóa để lần sau không hỏi lại
                         localStorage.setItem("family_unlocked", "true");
