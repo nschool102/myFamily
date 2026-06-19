@@ -672,7 +672,7 @@ input:checked + .slider:before {
     </div>
 
     <!-- TAB FAMILY -->
-    <div id="tab-family" class="tab-content" style="display: none;">
+    <div id="tab-family" class="tab-content">
     
     <div id="family-auth-view" class="card" style="text-align: center; padding: 40px 20px;">
         <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
@@ -1261,22 +1261,33 @@ input:checked + .slider:before {
         // Hàm kiểm tra trạng thái mở khóa mỗi khi người dùng bấm chuyển tab vào tab Family
         // Bạn hãy tìm hàm điều hướng tab hiện tại của mình (ví dụ: switchTab('family')) và gọi hàm này vào.
         function checkFamilyTabAccess() {
-            // Kiểm tra xem thiết bị này trước đó đã từng mở khóa thành công chưa
+            // Kiểm tra xem thiết bị này đã từng đăng nhập thành công trước đó chưa
             const isUnlocked = localStorage.getItem("family_unlocked") === "true";
             
             const authView = document.getElementById("family-auth-view");
             const mainView = document.getElementById("family-main-view");
             
             if (!authView || !mainView) return;
-
+        
             if (isUnlocked) {
-                authView.style.display = "none";
-                mainView.style.display = "block";
-                // Gọi hàm vẽ giao diện của bạn
-                if (typeof generateFamilyInterface === 'function') generateFamilyInterface();
+                // NẾU ĐÃ MỞ KHÓA -> Hiện nội dung chính, ẩn khung nhập pass
+                authView.style.setProperty("display", "none", "important");
+                mainView.style.setProperty("display", "block", "important");
+                
+                // Gọi hàm nạp dữ liệu thành viên của bạn
+                if (typeof generateFamilyInterface === 'function') {
+                    generateFamilyInterface();
+                } else if (typeof renderFamilyButtons === 'function') {
+                    renderFamilyButtons();
+                }
             } else {
-                authView.style.display = "block";
-                mainView.style.display = "none";
+                // NẾU CHƯA MỞ KHÓA -> Hiện khung nhập pass, ẩn nội dung chính
+                authView.style.setProperty("display", "block", "important");
+                mainView.style.setProperty("display", "none", "important");
+                
+                // Xóa sạch ô nhập pass cũ cho sạch sẽ
+                const passInput = document.getElementById("family-password");
+                if (passInput) passInput.value = "";
             }
         }
 
