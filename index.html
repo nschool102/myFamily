@@ -598,7 +598,7 @@ input:checked + .slider:before {
             <div id="top-expenses-list"></div>
         </div>
         <div class="card" style="margin-top: 15px;">
-            <h3>Lịch sử Chi</h3>
+            <h3>Lịch sử Khoản Chi (20 giao dịch gần nhất)</h3>
             <div id="expense-history-container">Đang tải lịch sử chi...</div>
         </div>
     </div>
@@ -631,7 +631,7 @@ input:checked + .slider:before {
             </form>
         </div>
         <div class="card" style="margin-top: 15px;">
-            <h3>Lịch sử Thu</h3>
+            <h3>Lịch sử Khoản Thu (20 giao dịch gần nhất)</h3>
             <div id="income-history-container">Đang tải lịch sử thu...</div>
         </div>
     </div>
@@ -671,7 +671,7 @@ input:checked + .slider:before {
             </div>
             <div class="stat-row"><span>Số Dư Hiện Tại:</span><strong id="sec4-balance">0</strong></div>
             <div class="stat-row"><span>Tổng Thu:</span><strong id="sec4-thu">0</strong></div>
-            <div class="stat-row"><span>Tổng Chi:</span><strong id="sec4-net-chi">0</strong></div>
+            <div class="stat-row"><span>Tổng Chi Thực Tế:</span><strong id="sec4-net-chi">0</strong></div>
             <div class="stat-row"><span>Tổng Số Tiền Tiết Kiệm:</span><strong id="sec4-savings" style="color:var(--theme-color);">0</strong></div>
             <div class="chart-container">
                 <canvas id="chart-sec4-pie"></canvas>
@@ -701,7 +701,9 @@ input:checked + .slider:before {
                 <div id="family-buttons-container"></div>
             </div>
         </div>
-    </div> <div id="familyModal" class="modal">
+    </div>
+
+    <div id="familyModal" class="modal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
             <h3 id="modal-member-title" style="margin-top: 0; margin-bottom: 15px; color: var(--theme-color);">Thông tin lý lịch</h3>
@@ -784,7 +786,9 @@ input:checked + .slider:before {
             </form>
             <div id="recurring-rules-list" style="margin-top:15px;"></div>
         </div>
-    </div> <div class="nav-tabs">
+    </div>
+
+    <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('chi')">Chi</button>
         <button class="tab-btn" onclick="switchTab('thu')">Thu</button>
         <button class="tab-btn" onclick="switchTab('thongke')">Thống Kê</button>
@@ -801,18 +805,21 @@ input:checked + .slider:before {
             apiEndpoint: 'https://script.google.com/macros/s/AKfycbzsrG_EpTW2FgX9FQ0opVVQKBKImKbHXwXg1-eeLxD8Up35AYWIWWRu2V2tNLVTWNSw/exec' 
         };
 
-        // CẬP NHẬT: Đổi thành let để nhận dữ liệu động từ Google Sheet
+        // Danh mục mặc định ban đầu để App không bị trống khi chưa đồng bộ
         let CATEGORIES = {
             thu: {
-                "Lương": ["Lương tháng"]
+                "Lương": ["Lương tháng", "Bổ sung lương", "Công tác phí", "Hoàn thuế", "Trực lễ tết", "Ứng lương"],
+                "Thưởng": ["Bất thường", "Thưởng năm"]
             },
             chi: {
-                "Chi tiêu thiết yếu": ["Đi chợ, siêu thị"]
+                "Chi tiêu thiết yếu": ["Đi chợ, siêu thị", "Điện", "Nước"],
+                "Giải trí": ["Cafe", "Xem phim"]
             }
         };
 
         let db;
         let charts = {};
+        let localFamilyData = []; // ĐÃ SỬA: Thêm khai báo toàn cục cho biến dữ liệu thành viên
 
         // Khởi tạo hệ thống lưu trữ IndexedDB ngoại tuyến độc lập
         function initDB() {
@@ -833,7 +840,7 @@ input:checked + .slider:before {
             };
         }
 
-        // Định dạng tiền tệ nhóm 3 chữ số bằng dấu phẩy tức thời (digit grouping ontype)
+        // Định dạng tiền tệ nhóm 3 chữ số bằng dấu phẩy tức thời
         function formatCurrency(input) {
             let value = input.value.replace(/[^0-9.]/g, "");
             let parts = value.split(".");
@@ -914,7 +921,6 @@ input:checked + .slider:before {
                 }
                 updateSubtypes(mode);
                 
-                // Set thời gian thực mặc định dạng 24h
                 const now = new Date();
                 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 const dateInput = document.getElementById(`${mode}-date`);
@@ -948,7 +954,6 @@ input:checked + .slider:before {
             }
         }
 
-        // Ghi nhận giao dịch - Tự động quy đổi số âm cho Tab Chi
         function saveTransaction(event, mode) {
             event.preventDefault();
             const type = document.getElementById(`${mode}-type`).value;
@@ -991,17 +996,13 @@ input:checked + .slider:before {
         let isSyncing = false; 
 
         function syncToGoogleSheets() {
-            if (!navigator.onLine || isSyncing || !CONFIG.apiEndpoint) {
-                return;
-            }
+            if (!navigator.onLine || isSyncing || !CONFIG.apiEndpoint) return;
             
             getAllTransactions(transactions => {
                 const unsynced = transactions.filter(t => t.synced === 0);
                 if (unsynced.length === 0) return;
 
-                isSyncing = true; 
-                console.log(`Phát hiện ${unsynced.length} khoản offline. Đang tự động đẩy lên Sheet...`);
-
+                isSyncing = true;
                 fetch(CONFIG.apiEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1016,14 +1017,11 @@ input:checked + .slider:before {
                             t.synced = 1;
                             store.put(t);
                         });
-                        
-                        console.log("Đồng bộ ngầm thành công!");
                         renderChartsAndStats(); 
                     }
                     isSyncing = false; 
                 })
                 .catch(err => {
-                    console.log("Lỗi kết nối, dữ liệu vẫn an toàn offline: ", err);
                     isSyncing = false; 
                 });
             });
@@ -1031,10 +1029,60 @@ input:checked + .slider:before {
 
         window.addEventListener('online', syncToGoogleSheets);
 
+        function renderPieChart(canvasId, labels, dataset, customColors = null) {
+            if (charts[canvasId]) charts[canvasId].destroy();
+            const canvasEl = document.getElementById(canvasId);
+            if (!canvasEl) return;
+            const ctx = canvasEl.getContext('2d');
+            
+            let total = dataset.reduce((a, b) => a + Math.abs(b), 0);
+            let defaultColors = ['#4CAF50', '#F44336', '#FF9800', '#2196F3', '#9C27B0', '#E91E63'];
+            
+            charts[canvasId] = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataset,
+                        backgroundColor: customColors || defaultColors
+                    }]
+                },
+                plugins: [ChartDataLabels], 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        datalabels: {
+                            color: function(context) {
+                                let bgColor = context.dataset.backgroundColor[context.dataIndex];
+                                return (bgColor === '#FFEB3B' || bgColor === '#8BC34A') ? '#111111' : '#ffffff';
+                            },
+                            font: { weight: 'bold', size: 12 },
+                            anchor: 'center', 
+                            align: 'center',
+                            formatter: function(value, context) {
+                                if (total === 0) return '';
+                                let pct = (Math.abs(value) / total * 100).toFixed(1) + "%";
+                                return (Math.abs(value) / total * 100) > 3 ? pct : '';
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.raw;
+                                    let pct = total > 0 ? (Math.abs(val) / total * 100).toFixed(1) + "%" : "0%";
+                                    return context.label + ": " + Math.abs(val).toLocaleString() + " (" + pct + ")";
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         function renderChartsAndStats() {
             getAllTransactions(data => {
                 let totalThu = 0, totalChi = 0;
-                let curMonthChi = 0, prevMonthChi = 0;
                 let catCurrentMonth = { "Tổng": 0, "Ăn uống": 0, "Đồ chơi": 0, "Mỹ phẩm": 0, "Quần áo": 0 };
                 let catPrevMonth = { "Tổng": 0, "Ăn uống": 0, "Đồ chơi": 0, "Mỹ phẩm": 0, "Quần áo": 0 };
                 let sum_Tiger = 0, sum_Mine = 0;
@@ -1096,72 +1144,44 @@ input:checked + .slider:before {
 
                 const s3Mine = document.getElementById("sec3-Mine"); if(s3Mine) s3Mine.textContent = formatVND(sum_Mine);
                 const s3Tiger = document.getElementById("sec3-Tiger"); if(s3Tiger) s3Tiger.textContent = formatVND(sum_Tiger);
-                renderPieChart('chart-sec3-pie', ['A (MÌNH)', 'B (CON CỢP)'], [sum_Mine, sum_Tiger]);
-                renderPieChart(
-                    'chart-sec3-pie', 
-                    ['A (MÌNH)', 'B (CON CỢP)'], 
-                    [sum_Mine, sum_Tiger], 
-                    ['#8BC34A', '#E91E63']
-                );
+                
+                // CẬP NHẬT: MÌNH màu xanh bơ (#8BC34A), CON CỢP màu hồng (#E91E63)
+                renderPieChart('chart-sec3-pie', ['A (MÌNH)', 'B (CON CỢP)'], [sum_Mine, sum_Tiger], ['#8BC34A', '#E91E63']);
 
                 renderSection4(data);
             });
         }
 
-        // Cập nhật hàm vẽ biểu đồ để hỗ trợ tùy biến màu sắc linh hoạt
-        function renderPieChart(canvasId, labels, dataset, customColors = null) {
-            if (charts[canvasId]) charts[canvasId].destroy();
-            const canvasEl = document.getElementById(canvasId);
-            if (!canvasEl) return;
-            const ctx = canvasEl.getContext('2d');
+        function renderTopExpenses() {
+            const periodSelect = document.getElementById("chi-top-period");
+            if(!periodSelect) return;
+            const period = periodSelect.value;
             
-            let total = dataset.reduce((a, b) => a + Math.abs(b), 0);
-            let defaultColors = ['#4CAF50', '#F44336', '#FF9800', '#2196F3', '#9C27B0', '#E91E63'];
-            
-            charts[canvasId] = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: dataset,
-                        backgroundColor: customColors || defaultColors
-                    }]
-                },
-                plugins: [ChartDataLabels], 
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        datalabels: {
-                            color: function(context) {
-                                // Nếu nền màu vàng quá sáng, đổi chữ sang màu tối để không bị lóa mắt
-                                let bgColor = context.dataset.backgroundColor[context.dataIndex];
-                                return (bgColor === '#FFEB3B' || bgColor === '#8BC34A') ? '#111111' : '#ffffff';
-                            },
-                            font: { weight: 'bold', size: 12 },
-                            anchor: 'center', 
-                            align: 'center',
-                            formatter: function(value, context) {
-                                if (total === 0) return '';
-                                let pct = (Math.abs(value) / total * 100).toFixed(1) + "%";
-                                return (Math.abs(value) / total * 100) > 3 ? pct : '';
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let val = context.raw;
-                                    let pct = total > 0 ? (Math.abs(val) / total * 100).toFixed(1) + "%" : "0%";
-                                    return context.label + ": " + Math.abs(val).toLocaleString() + " (" + pct + ")";
-                                }
-                            }
-                        }
-                    }
-                }
+            getAllTransactions(data => {
+                const now = new Date();
+                let filtered = data.filter(t => t.amount < 0);
+                
+                filtered = filtered.filter(t => {
+                    let d = new Date(t.timestamp);
+                    if (period === 'week') return (now - d) <= 7 * 24 * 60 * 60 * 1000;
+                    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                    if (period === 'year') return d.getFullYear() === now.getFullYear();
+                    return true;
+                });
+
+                filtered.sort((a, b) => a.amount - b.amount); 
+                const top5 = filtered.slice(0, 5);
+
+                const container = document.getElementById("top-expenses-list");
+                if(!container) return;
+                container.innerHTML = "";
+                if(top5.length === 0) container.innerHTML = "<p>Không có dữ liệu chi tiêu.</p>";
+                top5.forEach((t, index) => {
+                    container.innerHTML += `<div class="stat-row"><span>${index+1}. ${t.type} (${t.subtype}) ${t.note ? '- '+t.note : ''}</span><strong style="color:var(--danger-color);">${formatVND(Math.abs(t.amount))}</strong></div>`;
+                });
             });
         }
 
-        // Cập nhật hàm Render Section 4 và bổ sung Pie Chart
         function renderSection4(allData) {
             const periodSelect = document.getElementById("sec4-period");
             if(!periodSelect) return;
@@ -1185,7 +1205,6 @@ input:checked + .slider:before {
                             totalThu += t.amount;
                         } else {
                             let absAmt = Math.abs(t.amount);
-                            // Tính tổng các khoản có type là "Đầu tư, tiết kiệm"
                             if (t.type === "Đầu tư, tiết kiệm") {
                                 investmentSavings += absAmt;
                             } else {
@@ -1195,7 +1214,6 @@ input:checked + .slider:before {
                     }
                 });
 
-                // Tổng chi thực tế = Tổng chi ban đầu - Tiết kiệm (ở đây fullChi chính là phần chi đã loại trừ tiết kiệm)
                 const netChi = fullChi; 
 
                 const s4Bal = document.getElementById("sec4-balance"); if(s4Bal) s4Bal.textContent = formatVND(currentBalance);
@@ -1203,7 +1221,7 @@ input:checked + .slider:before {
                 const s4Chi = document.getElementById("sec4-net-chi"); if(s4Chi) s4Chi.textContent = formatVND(netChi);
                 const s4Sav = document.getElementById("sec4-savings"); if(s4Sav) s4Sav.textContent = formatVND(investmentSavings);
 
-                // Vẽ biểu đồ tròn Section 4: Thu (Xanh), Chi (Đỏ), Tiết kiệm (Vàng)
+                // CẬP NHẬT: Thêm pie chart cho Section 4: Thu (Xanh), Chi thực tế (Đỏ), Tiết kiệm (Vàng)
                 renderPieChart(
                     'chart-sec4-pie', 
                     ['Tổng Thu', 'Tổng Chi Thực Tế', 'Tiết Kiệm'], 
@@ -1213,42 +1231,6 @@ input:checked + .slider:before {
             };
             if (allData) run(allData); else getAllTransactions(run);
         }
-
-        function renderTopExpenses() {
-            const periodSelect = document.getElementById("chi-top-period");
-            if(!periodSelect) return;
-            const period = periodSelect.value;
-            
-            getAllTransactions(data => {
-                const now = new Date();
-                let filtered = data.filter(t => t.amount < 0);
-                
-                filtered = filtered.filter(t => {
-                    let d = new Date(t.timestamp);
-                    if (period === 'week') {
-                        return (now - d) <= 7 * 24 * 60 * 60 * 1000;
-                    } else if (period === 'month') {
-                        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                    } else if (period === 'year') {
-                        return d.getFullYear() === now.getFullYear();
-                    }
-                    return true;
-                });
-
-                filtered.sort((a, b) => a.amount - b.amount); 
-                const top5 = filtered.slice(0, 5);
-
-                const container = document.getElementById("top-expenses-list");
-                if(!container) return;
-                container.innerHTML = "";
-                if(top5.length === 0) container.innerHTML = "<p>Không có dữ liệu chi tiêu.</p>";
-                top5.forEach((t, index) => {
-                    container.innerHTML += `<div class="stat-row"><span>${index+1}. ${t.type} (${t.subtype}) ${t.note ? '- '+t.note : ''}</span><strong style="color:var(--danger-color);">${formatVND(Math.abs(t.amount))}</strong></div>`;
-                });
-            });
-        }
-
-        // 1251
 
         function checkFamilyTabAccess() {
             const isUnlocked = localStorage.getItem("family_unlocked") === "true";
@@ -1287,7 +1269,6 @@ input:checked + .slider:before {
                     }
                 })
                 .catch(err => {
-                    console.error("Lỗi xác thực tab Family:", err);
                     alert("Không thể kết nối để xác thực lúc này!");
                 });
         }
@@ -1295,7 +1276,7 @@ input:checked + .slider:before {
         function generateFamilyInterface() {
             const container = document.getElementById("family-buttons-container");
             if (!container) return;
-            container.innerHTML = "<p style='color: #aaa; text-align: center;'>🔄 Đang tải dữ liệu thành viên từ Google Sheet...</p>";
+            container.innerHTML = "<p style='color: #aaa; text-align: center;'>🔄 Đang tải dữ liệu thành viên từ bộ nhớ...</p>";
         
             if (localFamilyData && localFamilyData.length > 0) {
                 renderFamilyGrid(localFamilyData);
@@ -1315,7 +1296,7 @@ input:checked + .slider:before {
                         container.innerHTML = "<p style='color: #f44336; text-align: center;'>❌ Lỗi kết nối dữ liệu!</p>";
                     });
                 } else {
-                    container.innerHTML = "<p style='color: #aaa; text-align: center;'>Thiết bị ngoại tuyến.</p>";
+                    container.innerHTML = "<p style='color: #aaa; text-align: center;'>Thiết bị ngoại tuyến và chưa có bộ nhớ đệm.</p>";
                 }
             }
         }
@@ -1511,16 +1492,6 @@ input:checked + .slider:before {
                 updateRecurringCategories();
                 renderRulesList();
                 checkRecurringRules();
-                
-                if (navigator.onLine && CONFIG.apiEndpoint) {
-                    fetch(CONFIG.apiEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: 'backupRecurringRule', rule: rule })
-                    })
-                    .then(res => res.json())
-                    .catch(err => console.log(err));
-                }
             };
         }
 
@@ -1533,7 +1504,7 @@ input:checked + .slider:before {
                 e.target.result.forEach(item => {
                     if(item.key.startsWith("rule_")) {
                         let r = item.value;
-                        container.innerHTML += `<div class="stat-row"><span>Ngày ${r.day}: [${r.action.toUpperCase()}] ${r.type} -> ${r.subtype} ${r.note ? '虔'+r.note+' artigo' : ''}</span><strong>${formatVND(r.amount)}</strong></div>`;
+                        container.innerHTML += `<div class="stat-row"><span>Ngày ${r.day}: [${r.action.toUpperCase()}] ${r.type} -> ${r.subtype}</span><strong>${formatVND(r.amount)}</strong></div>`;
                     }
                 });
             };
@@ -1578,7 +1549,6 @@ input:checked + .slider:before {
             };
         }
 
-        // CẬP NHẬT: Hàm đồng bộ sửa lỗi bốc sai tên biến, tự cập nhật DOM và tạo trạng thái thời gian thực
         function syncAllDataFromSheet() {
             if (!navigator.onLine) {
                 alert("Thiết bị đang ngoại tuyến. Vui lòng kết nối internet để đồng bộ!");
@@ -1603,30 +1573,28 @@ input:checked + .slider:before {
             .then(([catRes, famRes]) => {
                 let successMessage = "";
 
-                // 1. SỬA LỖI: Cập nhật chuẩn vào biến CATEGORIES toàn cục thay vì localCategories
                 if (catRes.status === "success" && catRes.data) {
                     CATEGORIES = catRes.data;
-                    
                     if (db) {
                         const tx = db.transaction("settings", "readwrite");
                         tx.objectStore("settings").put({ key: "categories", value: catRes.data });
                     }
-
-                    // 2. SỬA LỖI: Gọi đúng hàm khởi tạo form để vẽ lại danh mục mới lên màn hình
                     initFormOptions();
                     updateRecurringCategories();
-                    
                     successMessage += "✅ Đã cập nhật Danh mục mới từ Sheet.\n";
                 }
 
                 if (famRes.status === "success" && famRes.data) {
                     localFamilyData = famRes.data;
+                    if (db) {
+                        const tx = db.transaction("settings", "readwrite");
+                        tx.objectStore("settings").put({ key: "family_data", value: famRes.data });
+                    }
                     renderFamilyGrid(famRes.data);
                     successMessage += "✅ Đã cập nhật Thông tin gia đình.";
                 }
 
                 if (successMessage) {
-                    // 3. THÊM MỚI: Xử lý chuỗi định dạng thời gian Last sync: dd/mm/yyyy hh:mm:ss
                     const now = new Date();
                     const day = String(now.getDate()).padStart(2, '0');
                     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1657,6 +1625,7 @@ input:checked + .slider:before {
                 syncBtn.disabled = false;
                 syncBtn.innerHTML = originalText;
                 syncBtn.style.opacity = "1";
+                renderChartsAndStats();
             });
         }
 
@@ -1693,12 +1662,16 @@ input:checked + .slider:before {
         };
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-        // CẬP NHẬT: Hàm tải cài đặt nạp lại danh mục và trạng thái Last sync đã lưu cũ
         function loadInitialSettings() {
             db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
                 const savedCategories = e.target.result.find(item => item.key === "categories");
                 if (savedCategories && savedCategories.value) {
                     CATEGORIES = savedCategories.value;
+                }
+
+                const savedFamily = e.target.result.find(item => item.key === "family_data");
+                if (savedFamily && savedFamily.value) {
+                    localFamilyData = savedFamily.value;
                 }
 
                 const lastSync = e.target.result.find(item => item.key === "last_sync_time");
@@ -1708,10 +1681,6 @@ input:checked + .slider:before {
                 }
 
                 e.target.result.forEach(item => {
-                    if(item.key === "mode") {
-                        const mSelect = document.getElementById("setting-mode");
-                        if(mSelect) mSelect.value = item.value;
-                    }
                     if(item.key === "color") {
                         const cSelect = document.getElementById("setting-color");
                         if(cSelect) cSelect.value = item.value;
