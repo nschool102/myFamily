@@ -9,11 +9,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
 /* ==========================================================================
-   1. KHAI BÁO BIẾN TOÀN CỤC (CSS VARIABLES - LIGHT MODE VÀ MẶC ĐỊNH)
+   1. KHAI BÁO BIẾN TOÀN CỤC (CSS VARIABLES)
    ========================================================================== */
 :root {
+    /* Theme colors - sẽ được JS cập nhật */
     --theme-color: #e91e63;
     --text-on-theme: #ffffff;
+    
+    /* System colors - MẶC ĐỊNH LIGHT MODE */
     --primary-bg: #ffffff;
     --secondary-bg: #f5f5f5;
     --text-color: #333333;
@@ -24,6 +27,7 @@
     --card-bg: #ffffff;
     --modal-bg: rgba(0,0,0,0.5);
     
+    /* Dark mode variables (mặc định là light) */
     --header-bg: var(--theme-color);
     --header-text: var(--text-on-theme);
     --nav-bg: var(--card-bg);
@@ -40,16 +44,17 @@
 }
 
 /* ==========================================================================
-   2. DARK MODE - GHI ĐÈ CHUẨN XÁC CÁC BIẾN MÀU
+   2. DARK MODE - GHI ĐÈ CÁC BIẾN
    ========================================================================== */
 [data-theme="dark"] {
     --primary-bg: #121212;
-    --secondary-bg: #121212;
+    --secondary-bg: #1e1e1e;
     --text-color: #e0e0e0;
     --border-color: #333333;
     --card-bg: #1e1e1e;
     --modal-bg: rgba(0,0,0,0.8);
     
+    /* Dark mode cho các thành phần đặc biệt */
     --header-bg: #1a1a1a;
     --header-text: #ffffff;
     --nav-bg: #1e1e1e;
@@ -65,126 +70,475 @@
     --stat-label-color: #999;
 }
 
-/* Chống lóa màu vàng */
-.theme-yellow { --text-on-theme: #111111; }
-[data-theme="dark"].theme-yellow { --text-on-theme: #111111; --header-text: #111111; }
+/* ==========================================================================
+   3. CHỐNG LÓA CHO MÀU VÀNG (CẢ LIGHT VÀ DARK)
+   ========================================================================== */
+.theme-yellow {
+    --text-on-theme: #111111;
+}
 
-* { box-sizing: border-box; }
+[data-theme="dark"].theme-yellow {
+    --text-on-theme: #111111;
+    --header-text: #111111;
+}
+
+/* ==========================================================================
+   4. RESET & BODY
+   ========================================================================== */
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    margin: 0; padding: 0;
+    margin: 0;
+    padding: 0;
     background-color: var(--secondary-bg);
     color: var(--text-color);
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
     padding-bottom: 80px;
 }
 
+/* ==========================================================================
+   5. HEADER
+   ========================================================================== */
 .header {
-    background-color: var(--header-bg); color: var(--header-text);
-    padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold;
-    position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-/* SỬA BẰNG CÁCH THÊM NGAY ĐOẠN NÀY VÀO DƯỚI NÓ */
-[data-theme="dark"] .header {
-    background-color: #1a1a1a !important;
-    color: #ffffff !important;
-    border-bottom: 1px solid #333333;
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    padding: 15px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Riêng cho trường hợp bạn chọn màu vàng ở chế độ tối để không bị lóa */
-[data-theme="dark"].theme-yellow .header {
-    background-color: #ffeb3b !important;
-    color: #111111 !important;
+/* Khi ở light mode và có theme màu */
+.header:not([data-theme="dark"]) {
+    background-color: var(--theme-color);
+    color: var(--text-on-theme);
 }
-        
+
+/* ==========================================================================
+   6. NAVIGATION TABS (Bottom)
+   ========================================================================== */
 .nav-tabs {
-    position: fixed; bottom: 0; left: 0; width: 100%;
-    background-color: var(--nav-bg); display: flex;
-    justify-content: space-around; border-top: 1px solid var(--nav-border);
-    z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--nav-bg);
+    display: flex;
+    justify-content: space-around;
+    border-top: 1px solid var(--nav-border);
+    z-index: 100;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .tab-btn {
-    background: none; border: none; color: var(--tab-color);
-    padding: 15px 5px; font-size: 0.9rem; cursor: pointer;
-    flex: 1; text-align: center; opacity: 0.6; transition: all 0.3s ease;
+    background: none;
+    border: none;
+    color: var(--tab-color);
+    padding: 15px 5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    opacity: 0.6;
+    transition: all 0.3s ease;
 }
 
 .tab-btn.active {
-    opacity: 1; color: var(--tab-active); font-weight: bold;
+    opacity: 1;
+    color: var(--tab-active);
+    font-weight: bold;
     border-top: 3px solid var(--tab-border);
 }
 
-.tab-content { display: none; padding: 15px; max-width: 600px; margin: 0 auto; }
-.tab-content.active { display: block; }
+/* ==========================================================================
+   7. TAB CONTENT
+   ========================================================================== */
+.tab-content {
+    display: none;
+    padding: 15px;
+    max-width: 600px;
+    margin: 0 auto;
+}
 
+.tab-content.active {
+    display: block;
+}
+
+/* ==========================================================================
+   8. CARDS
+   ========================================================================== */
 .card {
-    background-color: var(--card-bg); border-radius: 10px; padding: 18px;
-    margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
 }
-.card h3 { margin-top: 0; margin-bottom: 15px; }
 
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem; }
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+
+/* ==========================================================================
+   9. FORM
+   ========================================================================== */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
 .form-control {
-    width: 100%; padding: 12px; border: 1px solid var(--border-color);
-    border-radius: 8px; background-color: var(--input-bg); color: var(--text-color);
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    box-sizing: border-box;
     font-size: 1rem;
+    transition: all 0.3s ease;
 }
-.form-control:focus { outline: none; border-color: var(--theme-color); }
 
+.form-control:focus {
+    outline: none;
+    border-color: var(--theme-color);
+}
+
+.form-control option {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+/* ==========================================================================
+   10. BUTTONS
+   ========================================================================== */
 .btn {
-    background-color: var(--theme-color) !important; color: var(--text-on-theme) !important;
-    border: none; padding: 14px 20px; border-radius: 8px; cursor: pointer;
-    width: 100%; font-size: 1rem; font-weight: bold;
+    background-color: var(--theme-color) !important;
+    color: var(--text-on-theme) !important;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: all 0.2s ease;
 }
-.btn:disabled { opacity: 0.5 !important; cursor: not-allowed; }
 
-.family-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.btn:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+}
+
+/* ==========================================================================
+   11. FAMILY GRID - MEMBER BUTTONS
+   ========================================================================== */
+.family-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
 .member-btn {
-    background-color: var(--theme-color); color: var(--text-on-theme);
-    border: none; padding: 16px; border-radius: 8px; font-weight: bold; cursor: pointer;
+    background-color: var(--theme-color);
+    color: var(--text-on-theme);
+    border: none;
+    padding: 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
 }
 
+.member-btn:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+}
+
+/* ==========================================================================
+   12. MODAL
+   ========================================================================== */
 .modal {
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: var(--modal-bg); z-index: 1000; justify-content: center; align-items: center;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--modal-bg);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
 }
+
+.modal.show {
+    display: flex;
+}
+
 .modal-content {
-    background-color: var(--modal-content-bg); color: var(--modal-text);
-    padding: 20px; border-radius: 10px; width: 90%; max-width: 500px;
-    max-height: 85vh; overflow-y: auto; position: relative;
+    background-color: var(--modal-content-bg);
+    color: var(--modal-text);
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    transition: all 0.3s ease;
 }
-.modal-close { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; background: none; border: none; color: var(--text-color); }
 
-.info-row { padding: 12px 8px; border-bottom: 1px solid var(--border-color); cursor: pointer; }
-.info-row:hover { background-color: var(--secondary-bg); }
-.info-label { font-size: 0.85rem; color: var(--stat-label-color); }
-.info-value { font-size: 1rem; font-weight: 500; margin-top: 2px; }
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-color);
+    background: none;
+    border: none;
+}
 
+/* ==========================================================================
+   13. INFO ROWS
+   ========================================================================== */
+.info-row {
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.info-row:hover {
+    background-color: var(--secondary-bg);
+}
+
+.info-label {
+    font-size: 0.85rem;
+    color: var(--stat-label-color);
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 2px;
+    color: var(--text-color);
+}
+
+/* ==========================================================================
+   14. SCROLL TO TOP BUTTON
+   ========================================================================== */
 .scroll-top {
-    position: fixed; bottom: 85px; right: 20px; background-color: var(--scroll-bg); color: var(--scroll-text);
-    width: 48px; height: 48px; border-radius: 50%; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    cursor: pointer; display: none; justify-content: center; align-items: center; font-weight: bold; font-size: 1.3rem; z-index: 99;
+    position: fixed;
+    bottom: 85px;
+    right: 20px;
+    background-color: var(--scroll-bg);
+    color: var(--scroll-text);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: pointer;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.3rem;
+    z-index: 99;
+    transition: all 0.3s ease;
 }
 
-.chart-container { position: relative; margin: 15px auto; height: 260px; width: 100%; }
-.stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dotted var(--border-color); }
-.alert-box { background-color: rgba(244, 67, 54, 0.08); border-left: 4px solid var(--danger-color); padding: 12px; margin-bottom: 12px; border-radius: 0 6px 6px 0; font-size: 0.9rem; }
-[data-theme="dark"] .alert-box { background-color: rgba(244, 67, 54, 0.2); }
+.scroll-top.show {
+    display: flex;
+}
 
-.theme-switch-wrapper { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
-.theme-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
-.theme-switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-.slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-input:checked + .slider { background-color: var(--theme-color); }
-input:checked + .slider:before { transform: translateX(22px); }
+/* ==========================================================================
+   15. CHART & STATISTICS
+   ========================================================================== */
+.chart-container {
+    position: relative;
+    margin: 15px auto;
+    height: 260px;
+    width: 100%;
+}
 
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px dotted var(--border-color);
+    color: var(--text-color);
+}
+
+.stat-label {
+    color: var(--stat-label-color);
+    opacity: 0.7;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+/* ==========================================================================
+   16. ALERT BOX
+   ========================================================================== */
+.alert-box {
+    background-color: rgba(244, 67, 54, 0.08);
+    border-left: 4px solid var(--danger-color);
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .alert-box {
+    background-color: rgba(244, 67, 54, 0.2);
+}
+
+/* ==========================================================================
+   17. DARK MODE TOGGLE SWITCH
+   ========================================================================== */
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.theme-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--theme-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+/* ==========================================================================
+   18. FAMILY MODAL DARK MODE FIX
+   ========================================================================== */
+#familyModal .modal-content {
+    background: var(--modal-content-bg);
+    color: var(--modal-text);
+}
+
+#familyModal .modal-content h3 {
+    color: var(--theme-color);
+}
+
+#familyModal .modal-content .stat-row {
+    color: var(--modal-text);
+}
+
+#familyModal .modal-content .stat-row:hover {
+    background: var(--secondary-bg);
+}
+
+#familyModal .modal-content .btn {
+    background-color: var(--theme-color) !important;
+    color: var(--text-on-theme) !important;
+}
+
+/* ==========================================================================
+   19. UTILITY CLASSES
+   ========================================================================== */
+.theme-text {
+    color: var(--theme-color) !important;
+}
+
+.theme-bg {
+    background-color: var(--theme-color) !important;
+    color: var(--text-on-theme) !important;
+}
+
+.text-muted {
+    color: var(--text-color);
+    opacity: 0.6;
+}
+
+/* ==========================================================================
+   20. RESPONSIVE
+   ========================================================================== */
 @media (max-width: 480px) {
-    .family-grid { grid-template-columns: 1fr; }
-    .tab-btn { font-size: 0.75rem; padding: 12px 3px; }
+    .family-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .header {
+        font-size: 1rem;
+        padding: 12px;
+    }
+    
+    .tab-btn {
+        font-size: 0.75rem;
+        padding: 12px 3px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
 }
     </style>
 </head>
