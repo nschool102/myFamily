@@ -920,7 +920,7 @@ input:checked + .slider:before {
             document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
             
             document.getElementById(`tab-${tabName}`).classList.add("active");
-            // Fix: use event parameter properly
+            
             const btns = document.querySelectorAll(".tab-btn");
             btns.forEach(btn => {
                 if(btn.textContent.toLowerCase().includes(tabName.toLowerCase()) || 
@@ -930,12 +930,13 @@ input:checked + .slider:before {
                     btn.classList.add("active");
                 }
             });
-
+        
             if (tabName === 'chi' || tabName === 'thongke') {
                 renderChartsAndStats();
             }
-            // BỔ SUNG ĐOẠN KIỂM TRA NÀY:
-            if (tabId === 'family') {
+            
+            // ĐÃ SỬA: Đổi từ tabId sang tabName cho đồng bộ với tham số đầu hàm
+            if (tabName === 'family') {
                 checkFamilyTabAccess();
             }
         }
