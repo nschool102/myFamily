@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TIỀN CỦA TÔI</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,9 +12,11 @@
    1. KHAI BÁO BIẾN TOÀN CỤC (CSS VARIABLES)
    ========================================================================== */
 :root {
-    --theme-color: #8BC34A;
-    --text-on-theme: #111111;
+    /* Theme colors - sẽ được JS cập nhật */
+    --theme-color: #e91e63;
+    --text-on-theme: #ffffff;
     
+    /* System colors - MẶC ĐỊNH LIGHT MODE */
     --primary-bg: #ffffff;
     --secondary-bg: #f5f5f5;
     --text-color: #333333;
@@ -25,6 +27,7 @@
     --card-bg: #ffffff;
     --modal-bg: rgba(0,0,0,0.5);
     
+    /* Dark mode variables (mặc định là light) */
     --header-bg: var(--theme-color);
     --header-text: var(--text-on-theme);
     --nav-bg: var(--card-bg);
@@ -41,7 +44,7 @@
 }
 
 /* ==========================================================================
-   2. DARK MODE - GHI ĐÈ CÁC BIẾN (MẶC ĐỊNH BẬT)
+   2. DARK MODE - GHI ĐÈ CÁC BIẾN
    ========================================================================== */
 [data-theme="dark"] {
     --primary-bg: #121212;
@@ -51,6 +54,7 @@
     --card-bg: #1e1e1e;
     --modal-bg: rgba(0,0,0,0.8);
     
+    /* Dark mode cho các thành phần đặc biệt */
     --header-bg: #1a1a1a;
     --header-text: #ffffff;
     --nav-bg: #1e1e1e;
@@ -66,6 +70,9 @@
     --stat-label-color: #999;
 }
 
+/* ==========================================================================
+   3. CHỐNG LÓA CHO MÀU VÀNG (CẢ LIGHT VÀ DARK)
+   ========================================================================== */
 .theme-yellow {
     --text-on-theme: #111111;
 }
@@ -76,7 +83,7 @@
 }
 
 /* ==========================================================================
-   3. RESET & BODY
+   4. RESET & BODY
    ========================================================================== */
 * {
     box-sizing: border-box;
@@ -89,11 +96,11 @@ body {
     background-color: var(--secondary-bg);
     color: var(--text-color);
     transition: background-color 0.3s ease, color 0.3s ease;
-    padding-bottom: calc(90px + env(safe-area-inset-bottom)); 
+    padding-bottom: 80px;
 }
 
 /* ==========================================================================
-   4. HEADER
+   5. HEADER
    ========================================================================== */
 .header {
     background-color: var(--header-bg);
@@ -109,37 +116,30 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Khi ở light mode và có theme màu */
 .header:not([data-theme="dark"]) {
     background-color: var(--theme-color);
     color: var(--text-on-theme);
 }
 
 /* ==========================================================================
-   5. NAVIGATION TABS (Căn giữa, giới hạn rộng cho iPhone màn lớn)
-   ========================================================================== */
-/* ==========================================================================
-   5. NAVIGATION TABS (Sửa lỗi tràn viền - Ôm khít theo Card nội dung)
+   6. NAVIGATION TABS (Sửa lỗi tràn viền - Ôm khít theo Card nội dung)
    ========================================================================== */
 .nav-tabs {
     position: fixed;
-    bottom: 15px; /* Đẩy lên một chút tạo hiệu ứng nổi gầm giường (Floating) cực đẹp */
+    bottom: 15px;
     left: 50%;
     transform: translateX(-50%);
-    width: calc(100% - 30px); /* Thu hẹp lại để chừa đúng 15px hai bên lề giống như Card */
-    max-width: 570px; /* Giới hạn độ rộng tối đa cho màn hình lớn */
+    width: calc(100% - 30px);
+    max-width: 570px;
     background-color: var(--nav-bg);
     display: flex;
     justify-content: space-around;
-    
-    /* Bo góc tròn toàn diện xung quanh thanh điều hướng để không còn cảm giác bị tràn bẹt */
     border: 1px solid var(--nav-border);
     border-radius: 16px; 
-    
     z-index: 100;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     transition: background-color 0.3s ease, border-color 0.3s ease;
-    
-    /* Khoảng cách an toàn bên trong nút cho iPhone */
     padding-bottom: env(safe-area-inset-bottom, 0px); 
 }
 
@@ -160,11 +160,10 @@ body {
     opacity: 1;
     color: var(--tab-active);
     font-weight: bold;
-    border-top: 3px solid var(--tab-border);
 }
 
 /* ==========================================================================
-   6. TAB CONTENT
+   7. TAB CONTENT
    ========================================================================== */
 .tab-content {
     display: none;
@@ -178,7 +177,7 @@ body {
 }
 
 /* ==========================================================================
-   7. CARDS
+   8. CARDS
    ========================================================================== */
 .card {
     background-color: var(--card-bg);
@@ -197,7 +196,7 @@ body {
 }
 
 /* ==========================================================================
-   8. FORM
+   9. FORM
    ========================================================================== */
 .form-group {
     margin-bottom: 15px;
@@ -228,8 +227,13 @@ body {
     border-color: var(--theme-color);
 }
 
+.form-control option {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
 /* ==========================================================================
-   9. BUTTONS
+   10. BUTTONS
    ========================================================================== */
 .btn {
     background-color: var(--theme-color) !important;
@@ -250,29 +254,24 @@ body {
 }
 
 /* ==========================================================================
-   10. FAMILY GRID - CHIA 2 CỘT CỐ ĐỊNH, CHỮ THU GỌN VỪA VẶN KHÔNG PHẢI ZOOM
+   11. FAMILY GRID - MEMBER BUTTONS
    ========================================================================== */
 .family-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important; /* Luôn luôn giữ đúng 2 cột cố định kể cả trên điện thoại */
-    gap: 10px !important;
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
 }
 
 .member-btn {
     background-color: var(--theme-color);
     color: var(--text-on-theme);
     border: none;
-    padding: 12px 8px; /* Giảm padding một chút cho nút đỡ thô */
+    padding: 16px;
     border-radius: 8px;
     font-weight: bold;
-    font-size: 0.9rem; /* Giữ font chữ vừa phải để không bị vỡ hoặc đẩy giao diện */
     cursor: pointer;
     text-align: center;
     transition: all 0.2s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; /* Nếu tên quá dài tự động thêm dấu ... gọn gàng */
 }
 
 .member-btn:active {
@@ -281,7 +280,7 @@ body {
 }
 
 /* ==========================================================================
-   11. MODAL
+   12. MODAL
    ========================================================================== */
 .modal {
     display: none;
@@ -294,6 +293,11 @@ body {
     z-index: 1000;
     justify-content: center;
     align-items: center;
+    transition: all 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
 }
 
 .modal-content {
@@ -306,6 +310,7 @@ body {
     max-height: 85vh;
     overflow-y: auto;
     position: relative;
+    transition: all 0.3s ease;
 }
 
 .modal-close {
@@ -320,12 +325,13 @@ body {
 }
 
 /* ==========================================================================
-   12. INFO ROWS
+   13. INFO ROWS & TABLES
    ========================================================================== */
 .info-row {
     padding: 12px 8px;
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
+    transition: background 0.2s;
 }
 
 .info-row:hover {
@@ -344,12 +350,85 @@ body {
     color: var(--text-color);
 }
 
+/* Định dạng Bảng 3 cột mới cho lịch sử thu chi */
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 5px;
+    font-size: 0.9rem;
+}
+
+.history-table tr {
+    border-bottom: 1px dotted var(--border-color);
+    transition: background-color 0.2s ease;
+}
+
+.history-table tr:last-child {
+    border-bottom: none;
+}
+
+.history-table tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .history-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.history-table th, .history-table td {
+    padding: 10px 4px;
+    vertical-align: middle;
+}
+
+.history-table th {
+    font-size: 0.8rem;
+    color: var(--stat-label-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Định dạng cụ thể từng cột */
+.col-date {
+    width: 22%;
+    text-align: left;
+    font-size: 0.8rem;
+    color: var(--stat-label-color);
+}
+
+.col-content {
+    width: 48%;
+    text-align: left;
+    color: var(--text-color);
+    line-height: 1.4;
+}
+
+.col-amount {
+    width: 30%;
+    text-align: right;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.history-cate {
+    font-weight: 500;
+    display: block;
+}
+
+.history-note {
+    font-size: 0.78rem;
+    opacity: 0.75;
+    display: block;
+    word-break: break-word;
+    margin-top: 1px;
+}
+
 /* ==========================================================================
-   13. SCROLL TO TOP BUTTON
+   14. SCROLL TO TOP BUTTON
    ========================================================================== */
 .scroll-top {
     position: fixed;
-    bottom: calc(95px + env(safe-area-inset-bottom)); 
+    bottom: 85px;
     right: 20px;
     background-color: var(--scroll-bg);
     color: var(--scroll-text);
@@ -365,6 +444,7 @@ body {
     font-weight: bold;
     font-size: 1.3rem;
     z-index: 99;
+    transition: all 0.3s ease;
 }
 
 .scroll-top.show {
@@ -372,7 +452,7 @@ body {
 }
 
 /* ==========================================================================
-   14. CHART & STATISTICS
+   15. CHART & STATISTICS
    ========================================================================== */
 .chart-container {
     position: relative;
@@ -400,7 +480,7 @@ body {
 }
 
 /* ==========================================================================
-   15. ALERT BOX
+   16. ALERT BOX
    ========================================================================== */
 .alert-box {
     background-color: rgba(244, 67, 54, 0.08);
@@ -417,7 +497,7 @@ body {
 }
 
 /* ==========================================================================
-   16. DARK MODE TOGGLE SWITCH
+   17. DARK MODE TOGGLE SWITCH
    ========================================================================== */
 .theme-switch-wrapper {
     display: flex;
@@ -472,7 +552,7 @@ input:checked + .slider:before {
 }
 
 /* ==========================================================================
-   17. FAMILY MODAL DARK MODE FIX
+   18. FAMILY MODAL DARK MODE FIX
    ========================================================================== */
 #familyModal .modal-content {
     background: var(--modal-content-bg);
@@ -496,13 +576,37 @@ input:checked + .slider:before {
     color: var(--text-on-theme) !important;
 }
 
-.theme-text { color: var(--theme-color) !important; }
-.theme-bg { background-color: var(--theme-color) !important; color: var(--text-on-theme) !important; }
+/* ==========================================================================
+   19. UTILITY CLASSES
+   ========================================================================== */
+.theme-text {
+    color: var(--theme-color) !important;
+}
+
+.theme-text-muted {
+    font-size: 0.8rem;
+    color: var(--stat-label-color);
+    font-weight: normal;
+}
+
+.theme-bg {
+    background-color: var(--theme-color) !important;
+    color: var(--text-on-theme) !important;
+}
+
+.text-muted {
+    color: var(--text-color);
+    opacity: 0.6;
+}
 
 /* ==========================================================================
-   18. RESPONSIVE
+   20. RESPONSIVE
    ========================================================================== */
 @media (max-width: 480px) {
+    .family-grid {
+        grid-template-columns: 1fr;
+    }
+    
     .header {
         font-size: 1rem;
         padding: 12px;
@@ -516,10 +620,6 @@ input:checked + .slider:before {
     .modal-content {
         width: 95%;
         padding: 15px;
-    }
-    
-    .family-grid {
-        grid-template-columns: repeat(2, 1fr) !important; /* Đảm bảo tuyệt đối trên mobile vẫn là 2 cột */
     }
 }
     </style>
@@ -564,7 +664,7 @@ input:checked + .slider:before {
         </div>
 
         <div class="card">
-            <h3>Top 5 Khoản Chi Nhiều Nhất</h3>
+            <h3>Top 5 Khoản Chi Nhiều Nhất <span class="theme-text-muted">(Đã cộng dồn danh mục)</span></h3>
             <div class="form-group">
                 <select id="chi-top-period" class="form-control" onchange="renderTopExpenses()">
                     <option value="week">Tuần này</option>
@@ -670,7 +770,7 @@ input:checked + .slider:before {
         <div id="family-main-view" style="display: none;">
             <div class="card">
                 <h3>Thành viên gia đình</h3>
-                <div id="family-buttons-container" class="family-grid"></div>
+                <div id="family-buttons-container"></div>
             </div>
         </div>
     </div>
@@ -716,6 +816,41 @@ input:checked + .slider:before {
             <div id="sync-status" style="font-size: 12px; color: #aaa; margin-top: 8px; text-align: center;"></div>
             
             <button class="btn" onclick="resetAppCompletely()" style="background-color: #F44336 !important; color: #fff !important; width: 100%; margin-top: 15px;">🗑️ Xóa sạch dữ liệu & Đặt lại App</button>
+        </div>
+
+        <div class="card">
+            <h3>Thiết Lập Khoản Thu Chi Cố Định</h3>
+            <form id="form-recurring" onsubmit="addRecurringRule(event)">
+                <div class="form-group">
+                    <label>Loại giao dịch</label>
+                    <select id="recur-action-type" class="form-control" onchange="updateRecurringCategories()">
+                        <option value="chi">Chi</option>
+                        <option value="thu">Thu</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Danh mục phân loại (Type)</label>
+                    <select id="recur-type" class="form-control" onchange="updateRecurringSubtypes()"></select>
+                </div>
+                <div class="form-group">
+                    <label>Danh mục chi tiết (Subtype)</label>
+                    <select id="recur-subtype" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>Ngày thực hiện (1-31 hàng tháng)</label>
+                    <input type="number" inputmode="numeric" id="recur-day" class="form-control" min="1" max="31" placeholder="Ví dụ: 5" required>
+                </div>
+                <div class="form-group">
+                    <label>Số tiền (VND)</label>
+                    <input type="text" id="recur-amount" inputmode="numeric" class="form-control" oninput="formatCurrency(this)" placeholder="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Ghi chú thêm</label>
+                    <input type="text" id="recur-note" class="form-control" placeholder="Ví dụ: Tiền quĩ đóng định kỳ...">
+                </div>
+                <button type="submit" class="btn">Thêm Cấu Hình Tự Động</button>
+            </form>
+            <div id="recurring-rules-list" style="margin-top:15px;"></div>
         </div>
     </div>
 
@@ -770,6 +905,7 @@ input:checked + .slider:before {
             request.onsuccess = function(e) {
                 db = e.target.result;
                 loadInitialSettings();
+                checkRecurringRules();
             };
         }
 
@@ -788,6 +924,35 @@ input:checked + .slider:before {
             if(!typeSelect || !subtypeSelect) return;
             const selectedType = typeSelect.value;
             
+            subtypeSelect.innerHTML = "";
+            if (CATEGORIES[mode] && CATEGORIES[mode][selectedType]) {
+                CATEGORIES[mode][selectedType].forEach(sub => {
+                    let opt = document.createElement("option");
+                    opt.value = sub; opt.textContent = sub;
+                    subtypeSelect.appendChild(opt);
+                });
+            }
+        }
+
+        function updateRecurringCategories() {
+            const mode = document.getElementById("recur-action-type").value;
+            const typeSelect = document.getElementById("recur-type");
+            if(!typeSelect) return;
+            typeSelect.innerHTML = "";
+            Object.keys(CATEGORIES[mode]).forEach(type => {
+                let opt = document.createElement("option");
+                opt.value = type; opt.textContent = type;
+                typeSelect.appendChild(opt);
+            });
+            updateRecurringSubtypes();
+        }
+
+        function updateRecurringSubtypes() {
+            const mode = document.getElementById("recur-action-type").value;
+            const typeSelect = document.getElementById("recur-type");
+            const subtypeSelect = document.getElementById("recur-subtype");
+            if(!typeSelect || !subtypeSelect) return;
+            const selectedType = typeSelect.value;
             subtypeSelect.innerHTML = "";
             if (CATEGORIES[mode] && CATEGORIES[mode][selectedType]) {
                 CATEGORIES[mode][selectedType].forEach(sub => {
@@ -936,8 +1101,59 @@ input:checked + .slider:before {
                 let expList = sortedData.filter(t => t.amount < 0).slice(0, 20);
                 let incList = sortedData.filter(t => t.amount > 0).slice(0, 20);
 
-                document.getElementById("expense-history-container").innerHTML = expList.length ? expList.map(t => `<div class="stat-row"><span>${new Date(t.timestamp).toLocaleDateString('vi-VN')} - ${t.type} (${t.subtype}) ${t.note ? '<i> - '+t.note+'</i>':''}</span><strong style="color:var(--danger-color);">${formatVND(Math.abs(t.amount))}</strong></div>`).join('') : "Chưa có khoản chi nào.";
-                document.getElementById("income-history-container").innerHTML = incList.length ? incList.map(t => `<div class="stat-row"><span>${new Date(t.timestamp).toLocaleDateString('vi-VN')} - ${t.type} (${t.subtype}) ${t.note ? '<i> - '+t.note+'</i>':''}</span><strong style="color:var(--success-color);">${formatVND(t.amount)}</strong></div>`).join('') : "Chưa có khoản thu nào.";
+                // 1. Cập nhật bảng Lịch sử Chi dạng 3 cột
+                const expContainer = document.getElementById("expense-history-container");
+                if (expContainer) {
+                    if (expList.length) {
+                        let htmlTable = '<table class="history-table">';
+                        expList.forEach(t => {
+                            const dateStr = new Date(t.timestamp).toLocaleDateString('vi-VN');
+                            const noteStr = t.note ? `<span class="history-note">📝 ${t.note}</span>` : '';
+                            htmlTable += `
+                                <tr>
+                                    <td class="col-date">${dateStr}</td>
+                                    <td class="col-content">
+                                        <span class="history-cate">${t.type} <small>(${t.subtype})</small></span>
+                                        ${noteStr}
+                                    </td>
+                                    <td class="col-amount" style="color: var(--danger-color);">
+                                        ${formatVND(Math.abs(t.amount))}
+                                    </td>
+                                </tr>`;
+                        });
+                        htmlTable += '</table>';
+                        expContainer.innerHTML = htmlTable;
+                    } else {
+                        expContainer.innerHTML = "<p style='text-align:center; color:var(--stat-label-color); font-size:13px;'>Chưa có khoản chi nào.</p>";
+                    }
+                }
+
+                // 2. Cập nhật bảng Lịch sử Thu dạng 3 cột
+                const incContainer = document.getElementById("income-history-container");
+                if (incContainer) {
+                    if (incList.length) {
+                        let htmlTable = '<table class="history-table">';
+                        incList.forEach(t => {
+                            const dateStr = new Date(t.timestamp).toLocaleDateString('vi-VN');
+                            const noteStr = t.note ? `<span class="history-note">📝 ${t.note}</span>` : '';
+                            htmlTable += `
+                                <tr>
+                                    <td class="col-date">${dateStr}</td>
+                                    <td class="col-content">
+                                        <span class="history-cate">${t.type} <small>(${t.subtype})</small></span>
+                                        ${noteStr}
+                                    </td>
+                                    <td class="col-amount" style="color: var(--success-color);">
+                                        ${formatVND(t.amount)}
+                                    </td>
+                                </tr>`;
+                        });
+                        htmlTable += '</table>';
+                        incContainer.innerHTML = htmlTable;
+                    } else {
+                        incContainer.innerHTML = "<p style='text-align:center; color:var(--stat-label-color); font-size:13px;'>Chưa có khoản thu nào.</p>";
+                    }
+                }
 
                 data.forEach(t => {
                     const tDate = new Date(t.timestamp), amt = t.amount;
@@ -996,17 +1212,42 @@ input:checked + .slider:before {
             const period = periodSelect.value, now = new Date();
             
             getAllTransactions(data => {
+                // Lọc các khoản chi theo thời gian được chọn
                 let filtered = data.filter(t => t.amount < 0).filter(t => {
                     let d = new Date(t.timestamp);
                     if (period === 'week') return (now - d) <= 7 * 24 * 60 * 60 * 1000;
                     if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
                     if (period === 'year') return d.getFullYear() === now.getFullYear();
                     return true;
-                }).sort((a, b) => a.amount - b.amount);
+                });
+
+                // Thực hiện cộng dồn gom nhóm theo cặp (Type + Subtype)
+                let grouped = {};
+                filtered.forEach(t => {
+                    let key = `${t.type} ||| ${t.subtype}`;
+                    if (!grouped[key]) {
+                        grouped[key] = {
+                            type: t.type,
+                            subtype: t.subtype,
+                            totalAmount: 0
+                        };
+                    }
+                    grouped[key].totalAmount += Math.abs(t.amount);
+                });
+
+                // Chuyển object gom nhóm thành mảng và sắp xếp giảm dần theo số tiền tổng cộng
+                let sortedGroups = Object.values(grouped).sort((a, b) => b.totalAmount - a.totalAmount);
 
                 const container = document.getElementById("top-expenses-list");
                 if(!container) return;
-                container.innerHTML = filtered.length ? filtered.slice(0, 5).map((t, i) => `<div class="stat-row"><span>${i+1}. ${t.type} (${t.subtype}) ${t.note ? '- '+t.note : ''}</span><strong style="color:var(--danger-color);">${formatVND(Math.abs(t.amount))}</strong></div>`).join('') : "<p>Không có dữ liệu chi tiêu.</p>";
+                
+                container.innerHTML = sortedGroups.length ? 
+                    sortedGroups.slice(0, 5).map((g, i) => `
+                        <div class="stat-row">
+                            <span>${i+1}. <strong>${g.type}</strong> (${g.subtype})</span>
+                            <strong style="color:var(--danger-color);">${formatVND(g.totalAmount)}</strong>
+                        </div>`).join('') 
+                    : "<p style='color:var(--stat-label-color); font-size:13px; text-align:center;'>Không có dữ liệu chi tiêu trong khoảng thời gian này.</p>";
             });
         }
 
@@ -1086,18 +1327,10 @@ input:checked + .slider:before {
         
         function renderFamilyGrid(members) {
             const container = document.getElementById("family-buttons-container");
-            if (!container) return; 
-            container.innerHTML = "";
-            
-            // Ép class lưới grid hoạt động chuẩn chỉnh cố định
-            container.className = "family-grid"; 
-            
+            if (!container) return; container.innerHTML = "";
             members.forEach(m => {
-                let btn = document.createElement("button"); 
-                btn.className = "member-btn"; 
-                btn.style.margin = "0"; 
-                btn.textContent = m.nickname || m.fullname; 
-                btn.onclick = () => showFamilyModal(m);
+                let btn = document.createElement("button"); btn.className = "member-btn"; btn.style.margin = "5px";
+                btn.textContent = m.nickname || m.fullname; btn.onclick = () => showFamilyModal(m);
                 container.appendChild(btn);
             });
         }
@@ -1132,7 +1365,7 @@ input:checked + .slider:before {
         }
 
         function applyTheme() {
-            const themeColor = document.getElementById("setting-color")?.value || "#8BC34A";
+            const themeColor = document.getElementById("setting-color")?.value || "#e91e63";
             const root = document.documentElement;
             root.style.setProperty('--theme-color', themeColor.toLowerCase());
             root.classList.toggle("theme-yellow", /yellow|#ffeb3b/i.test(themeColor));
@@ -1143,17 +1376,89 @@ input:checked + .slider:before {
         }
 
         function loadTheme() {
-            const savedDark = localStorage.getItem('darkMode');
-            const isDark = savedDark !== null ? savedDark === 'true' : true; 
-            
+            const isDark = localStorage.getItem('darkMode') === 'true';
             document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
             if (document.getElementById('darkModeToggle')) document.getElementById('darkModeToggle').checked = isDark;
             
-            let savedColor = localStorage.getItem('themeColor') || "#8BC34A";
-            if(document.getElementById("setting-color")) {
-                document.getElementById("setting-color").value = savedColor;
-            }
-            applyTheme();
+            let savedColor = localStorage.getItem('themeColor');
+            if (savedColor) { if(document.getElementById("setting-color")) document.getElementById("setting-color").value = savedColor; applyTheme(); }
+        }
+
+        function addRecurringRule(e) {
+            e.preventDefault();
+            const action = document.getElementById("recur-action-type").value;
+            const type = document.getElementById("recur-type").value;
+            const subtype = document.getElementById("recur-subtype").value;
+            const day = parseInt(document.getElementById("recur-day").value);
+            const amount = parseCurrency(document.getElementById("recur-amount").value);
+            const note = document.getElementById("recur-note").value;
+            
+            const rule = { action, type, subtype, day, amount, note: note || "", id: Date.now() };
+            
+            const tx = db.transaction("settings", "readwrite");
+            const store = tx.objectStore("settings");
+            
+            store.put({ key: `rule_${rule.id}`, value: rule });
+            
+            tx.oncomplete = function() {
+                alert("✅ Đã lưu cấu hình tự động thành công!");
+                document.getElementById("form-recurring").reset(); 
+                updateRecurringCategories(); 
+                renderRulesList(); 
+                checkRecurringRules(); 
+            };
+        }
+
+        function renderRulesList() {
+            if (!db) return; 
+            const container = document.getElementById("recurring-rules-list"); 
+            if (!container) return; 
+            
+            container.innerHTML = "<h4 style='margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:5px;'>Khoản tự động đã cấu hình:</h4>";
+            
+            db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
+                const items = e.target.result || [];
+                const rules = items.filter(item => item.key && item.key.startsWith("rule_"));
+                
+                if (rules.length === 0) {
+                    container.innerHTML += "<p style='color:#aaa; font-size:13px;'>Chưa có cấu hình tự động nào được tạo.</p>";
+                    return;
+                }
+                
+                rules.forEach(item => { 
+                    const r = item.value;
+                    const badgeColor = r.action === 'chi' ? 'var(--danger-color)' : 'var(--success-color)';
+                    container.innerHTML += `
+                        <div class="stat-row" style="padding: 12px 0;">
+                            <span>
+                                <b style="color:${badgeColor}">[${r.action.toUpperCase()}]</b> 
+                                Ngày ${r.day} hàng tháng: ${r.type} → ${r.subtype} 
+                                ${r.note ? `<br><small style="color:#aaa;"><i>* Ghi chú: ${r.note}</i></small>` : ''}
+                            </span>
+                            <strong style="color:${badgeColor}">${formatVND(r.amount)}</strong>
+                        </div>`; 
+                });
+            };
+        }
+        
+        function checkRecurringRules() {
+            if(!db) return; const today = new Date(), currentDay = today.getDate();
+            db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
+                const rules = e.target.result.filter(i => i.key.startsWith("rule_")).map(i => i.value);
+                if(!rules.length) return;
+                getAllTransactions(transactions => {
+                    rules.forEach(rule => {
+                        if (currentDay >= rule.day) {
+                            let uniqKey = `${rule.type}_${rule.subtype}_${rule.day}_${today.getFullYear()}_${today.getMonth()}`;
+                            if (!transactions.find(t => t.recurringKey === uniqKey)) {
+                                let execDate = new Date(); execDate.setDate(rule.day);
+                                const transaction = { timestamp: execDate.toISOString(), type: rule.type, subtype: rule.subtype, amount: rule.action === 'chi' ? -Math.abs(rule.amount) : rule.amount, note: rule.note ? rule.note + " (Tự động)" : "Tự động chèn", synced: 0, recurringKey: uniqKey };
+                                db.transaction("transactions", "readwrite").objectStore("transactions").add(transaction).oncomplete = () => { renderChartsAndStats(); syncToGoogleSheets(); };
+                            }
+                        }
+                    });
+                });
+            };
         }
 
         function syncAllDataFromSheet() {
@@ -1175,6 +1480,7 @@ input:checked + .slider:before {
                         if (resData.status === "success" && resData.data) {
                             const serverFamily = resData.data.family || [];
                             const serverTransactions = resData.data.transactions || [];
+                            const serverRules = resData.data.recurringRules || [];
         
                             localFamilyData = serverFamily;
                             if (db) db.transaction("settings", "readwrite").objectStore("settings").put({ key: "family_data", value: serverFamily });
@@ -1196,12 +1502,30 @@ input:checked + .slider:before {
                                 });
                             }
         
+                            if (db && serverRules.length > 0) {
+                                const txSettings = db.transaction("settings", "readwrite");
+                                const storeSettings = txSettings.objectStore("settings");
+                                
+                                storeSettings.getAll().onsuccess = function(e) {
+                                    const localItems = e.target.result || [];
+                                    serverRules.forEach(sRule => {
+                                        const ruleKey = `rule_${sRule.id}`;
+                                        const isRuleExist = localItems.some(item => item.key === ruleKey);
+                                        
+                                        if (!isRuleExist) {
+                                            storeSettings.put({ key: ruleKey, value: sRule });
+                                        }
+                                    });
+                                    renderRulesList(); 
+                                };
+                            }
+        
                             const now = new Date();
                             const timeString = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                             if(document.getElementById("sync-status")) document.getElementById("sync-status").innerHTML = `Last sync: ${timeString}`;
                             if (db) db.transaction("settings", "readwrite").objectStore("settings").put({ key: "last_sync_time", value: timeString });
                             
-                            alert("✅ Đồng bộ thành công! Đã cập nhật Thu/Chi và Lý lịch gia đình mới nhất, tự động loại bỏ trùng lặp.");
+                            alert("✅ Đồng bộ thành công! Đã cập nhật Thu/Chi, Định kỳ và Lý lịch gia đình mới nhất, tự động loại bỏ trùng lặp.");
                         } else {
                             alert("⚠️ Đồng bộ xong nhưng định dạng dữ liệu phản hồi từ Sheet không đúng.");
                         }
@@ -1214,6 +1538,7 @@ input:checked + .slider:before {
                         syncBtn.innerHTML = originalText; 
                         syncBtn.style.opacity = "1";
                         initFormOptions(); 
+                        updateRecurringCategories(); 
                         renderChartsAndStats();
                     });
                 };
@@ -1264,6 +1589,7 @@ input:checked + .slider:before {
                 
                 mask.appendChild(box);
                 document.body.appendChild(mask);
+                
                 document.getElementById("secure-reset-pass").focus();
                 document.getElementById("btn-cancel-reset").onclick = () => mask.remove();
                 
@@ -1307,6 +1633,8 @@ input:checked + .slider:before {
         
                 loadTheme();
                 initFormOptions(); 
+                updateRecurringCategories();
+                renderRulesList(); 
                 renderChartsAndStats();
             };
         }
