@@ -116,7 +116,6 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Khi ở light mode và có theme màu */
 .header:not([data-theme="dark"]) {
     background-color: var(--theme-color);
     color: var(--text-on-theme);
@@ -679,6 +678,7 @@ input:checked + .slider:before {
         </div>
     </div>
 
+    <!-- TAB FAMILY -->
     <div id="tab-family" class="tab-content">
         <div id="family-auth-view" class="card" style="text-align: center; padding: 40px 20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
@@ -703,6 +703,7 @@ input:checked + .slider:before {
         </div>
     </div>
 
+    <!-- FAMILY DETAIL MODAL -->
     <div id="familyModal" class="modal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -712,6 +713,7 @@ input:checked + .slider:before {
         </div>
     </div>
 
+    <!-- TAB SETTINGS -->
     <div id="tab-settings" class="tab-content">
         <div class="card">
             <h3>Thay Đổi Giao Diện</h3>
@@ -805,21 +807,24 @@ input:checked + .slider:before {
             apiEndpoint: 'https://script.google.com/macros/s/AKfycbzsrG_EpTW2FgX9FQ0opVVQKBKImKbHXwXg1-eeLxD8Up35AYWIWWRu2V2tNLVTWNSw/exec' 
         };
 
-        // Danh mục mặc định ban đầu để App không bị trống khi chưa đồng bộ
+        // GỐC DỰ PHÒNG: Đảm bảo CATEGORIES luôn có dữ liệu chuẩn ngay khi mở ứng dụng lần đầu
         let CATEGORIES = {
             thu: {
                 "Lương": ["Lương tháng", "Bổ sung lương", "Công tác phí", "Hoàn thuế", "Trực lễ tết", "Ứng lương"],
-                "Thưởng": ["Bất thường", "Thưởng năm"]
+                "Thưởng": ["Bất thường", "Thưởng năm"],
+                "CON CỢP": ["Thu nhập Tiger"]
             },
             chi: {
-                "Chi tiêu thiết yếu": ["Đi chợ, siêu thị", "Điện", "Nước"],
-                "Giải trí": ["Cafe", "Xem phim"]
+                "Chi tiêu thiết yếu": ["Đi chợ, siêu thị", "Điện", "Nước", "Internet", "Xăng xe", "Điện thoại"],
+                "Đầu tư, tiết kiệm": ["Gửi tiết kiệm", "Mua vàng", "Đầu tư tài chính"],
+                "Giải trí": ["Cafe", "Xem phim", "Ăn tiệm"],
+                "Mua sắm cá nhân": ["Quần áo", "Mỹ phẩm", "Đồ chơi"]
             }
         };
 
         let db;
         let charts = {};
-        let localFamilyData = []; // ĐÃ SỬA: Thêm khai báo toàn cục cho biến dữ liệu thành viên
+        let localFamilyData = []; 
 
         // Khởi tạo hệ thống lưu trữ IndexedDB ngoại tuyến độc lập
         function initDB() {
@@ -857,7 +862,7 @@ input:checked + .slider:before {
             return num.toLocaleString('en-US') + " đ";
         }
 
-        // Tạo cấu trúc select phụ thuộc Type -> Subtype
+        // ĐÃ SỬA: Kiểm tra bảo vệ điều kiện nghiêm ngặt để danh mục không bị trống
         function updateSubtypes(mode) {
             const typeSelect = document.getElementById(`${mode}-type`);
             const subtypeSelect = document.getElementById(`${mode}-subtype`);
@@ -907,10 +912,12 @@ input:checked + .slider:before {
             }
         }
 
+        // ĐÃ SỬA: Đảm bảo danh mục phân loại (Type) được nạp trước rồi mới gán Subtype tương ứng
         function initFormOptions() {
             ['chi', 'thu'].forEach(mode => {
                 const typeSelect = document.getElementById(`${mode}-type`);
                 if(!typeSelect) return;
+                
                 typeSelect.innerHTML = "";
                 if(CATEGORIES[mode]) {
                     Object.keys(CATEGORIES[mode]).forEach(type => {
@@ -1145,7 +1152,7 @@ input:checked + .slider:before {
                 const s3Mine = document.getElementById("sec3-Mine"); if(s3Mine) s3Mine.textContent = formatVND(sum_Mine);
                 const s3Tiger = document.getElementById("sec3-Tiger"); if(s3Tiger) s3Tiger.textContent = formatVND(sum_Tiger);
                 
-                // CẬP NHẬT: MÌNH màu xanh bơ (#8BC34A), CON CỢP màu hồng (#E91E63)
+                // MÌNH màu xanh bơ, CON CỢP màu hồng
                 renderPieChart('chart-sec3-pie', ['A (MÌNH)', 'B (CON CỢP)'], [sum_Mine, sum_Tiger], ['#8BC34A', '#E91E63']);
 
                 renderSection4(data);
@@ -1221,7 +1228,6 @@ input:checked + .slider:before {
                 const s4Chi = document.getElementById("sec4-net-chi"); if(s4Chi) s4Chi.textContent = formatVND(netChi);
                 const s4Sav = document.getElementById("sec4-savings"); if(s4Sav) s4Sav.textContent = formatVND(investmentSavings);
 
-                // CẬP NHẬT: Thêm pie chart cho Section 4: Thu (Xanh), Chi thực tế (Đỏ), Tiết kiệm (Vàng)
                 renderPieChart(
                     'chart-sec4-pie', 
                     ['Tổng Thu', 'Tổng Chi Thực Tế', 'Tiết Kiệm'], 
@@ -1276,7 +1282,7 @@ input:checked + .slider:before {
         function generateFamilyInterface() {
             const container = document.getElementById("family-buttons-container");
             if (!container) return;
-            container.innerHTML = "<p style='color: #aaa; text-align: center;'>🔄 Đang tải dữ liệu thành viên từ bộ nhớ...</p>";
+            container.innerHTML = "<p style='color: #aaa; text-align: center;'>🔄 Đang tải dữ liệu thành viên...</p>";
         
             if (localFamilyData && localFamilyData.length > 0) {
                 renderFamilyGrid(localFamilyData);
@@ -1579,8 +1585,6 @@ input:checked + .slider:before {
                         const tx = db.transaction("settings", "readwrite");
                         tx.objectStore("settings").put({ key: "categories", value: catRes.data });
                     }
-                    initFormOptions();
-                    updateRecurringCategories();
                     successMessage += "✅ Đã cập nhật Danh mục mới từ Sheet.\n";
                 }
 
@@ -1590,7 +1594,6 @@ input:checked + .slider:before {
                         const tx = db.transaction("settings", "readwrite");
                         tx.objectStore("settings").put({ key: "family_data", value: famRes.data });
                     }
-                    renderFamilyGrid(famRes.data);
                     successMessage += "✅ Đã cập nhật Thông tin gia đình.";
                 }
 
@@ -1625,6 +1628,8 @@ input:checked + .slider:before {
                 syncBtn.disabled = false;
                 syncBtn.innerHTML = originalText;
                 syncBtn.style.opacity = "1";
+                initFormOptions(); // Buộc render lại cấu trúc form sau khi đồng bộ
+                updateRecurringCategories();
                 renderChartsAndStats();
             });
         }
@@ -1662,6 +1667,7 @@ input:checked + .slider:before {
         };
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
+        // ĐÃ SỬA: Đồng bộ hóa tiến trình đọc dữ liệu cũ để tránh bất đồng bộ trống select box
         function loadInitialSettings() {
             db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
                 const savedCategories = e.target.result.find(item => item.key === "categories");
@@ -1686,6 +1692,8 @@ input:checked + .slider:before {
                         if(cSelect) cSelect.value = item.value;
                     }
                 });
+                
+                // Khởi động các hàm giao diện TUẦN TỰ sau khi gán biến hoàn tất
                 loadTheme();
                 initFormOptions();
                 updateRecurringCategories();
