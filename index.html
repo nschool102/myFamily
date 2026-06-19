@@ -425,15 +425,22 @@ input:checked + .slider:before { transform: translateX(22px); }
         // HARDCODE DANH MỤC CỐ ĐỊNH CHUẨN XÁC TUYỆT ĐỐI - KHÔNG SỢ BỊ XÓA HAY LỖI MẠNG
         const CATEGORIES = {
             thu: {
-                "Lương": ["Lương tháng", "Bổ sung lương", "Công tác phí", "Hoàn thuế", "Trực lễ tết", "Ứng lương"],
-                "Thưởng": ["Bất thường", "Thưởng năm"],
-                "CON CỢP": ["Thu nhập Tiger"]
+                "Lương": ["Lương tháng", "Bổ sung lương", "Ứng lương", "Trực lễ tết", "Công tác phí", "Hoàn thuế"],
+                "Thưởng": ["Bất thường", "Bổ sung thưởng", "Thưởng lễ tết", "Thưởng năm", "Thưởng quí"],
+                "Phụ cấp": ["Mĩ phẩm", "Vệ sinh viên"],
+                "Phúc lợi": ["HSG", "Phụ nữ", "Sinh nhật", "Thiếu nhi"], 
+                "Thu khác": ["Bảo hiểm refund"],
+                "Bất thường": ["Tặng cho", "Trúng số"],
+                "CON CỢP": ["Lương tháng", "Bổ sung lương", "Bổ sung thưởng"]
             },
             chi: {
-                "Chi tiêu thiết yếu": ["Đi chợ, siêu thị", "Điện", "Nước", "Internet", "Xăng xe", "Điện thoại"],
-                "Đầu tư, tiết kiệm": ["Gửi tiết kiệm", "Mua vàng", "Đầu tư tài chính"],
-                "Giải trí": ["Cafe", "Xem phim", "Ăn tiệm"],
-                "Mua sắm cá nhân": ["Quần áo", "Mỹ phẩm", "Đồ chơi"]
+                "Chi khác": ["Từ thiện", "Biếu tặng", "Dịch vụ công"],
+                "Chi tiêu thiết yếu": ["Đi chợ, siêu thị", "Điện", "Nước", "Internet", "Xăng", "Tiền tiêu vặt", "Điện thoại", "Transportation"],
+                "Đầu tư, tiết kiệm": ["Vàng", "Tiền mặt", "USDT"],
+                "Giải trí": ["Cafe", "Coi phim", "Du lịch", "Nhà hàng"],
+                "Giáo dục": ["Học phí", "Học thêm", "Quĩ lớp", "Lệ phí"],
+                "Mua sắm": ["Đồ ăn, thức uống", "Đồ chơi", "Đồ gia dụng", "Mĩ phẩm", "Phụ kiện", "Quần áo", "Sách", "Thực phẩm chức năng", "Văn phòng phẩm"],
+                "Y tế": ["Khám, chữa bệnh", "Thuốc"]
             }
         };
 
