@@ -1303,19 +1303,14 @@ input:checked + .slider:before {
                 alert("Chưa cấu hình API URL!");
                 return;
             }
-
-            // Đổi chữ nút bấm thành trạng thái đang check (nếu có nút bấm gọi hàm này)
-            // Hoặc xử lý trực tiếp fetch gửi lên Google Sheet để xác thực bảo mật
+        
             fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(inputPass.trim())}`)
                 .then(res => res.json())
                 .then(res => {
                     console.log("Kết quả từ Google Sheet:", res);
                     if (res.status === "success" && res.match === true) {
-                        // 1. Nhập đúng -> Lưu trạng thái đã mở khóa để lần sau không hỏi lại
                         localStorage.setItem("family_unlocked", "true");
                         
-                        // 2. Ẩn màn hình khóa, hiện màn hình nội dung chính
-                        // (Tên ID điều chỉnh khớp theo các thẻ div hiện tại của bạn)
                         if (document.getElementById("family-auth-view")) {
                             document.getElementById("family-auth-view").style.display = "none";
                         } else if (document.getElementById("family-lock-screen")) {
@@ -1328,15 +1323,10 @@ input:checked + .slider:before {
                             document.getElementById("family-content").style.display = "block";
                         }
                         
-                        // 3. Khởi tạo nạp dữ liệu danh sách thành viên
-                        if (typeof generateFamilyInterface === 'function') {
-                            generateFamilyInterface();
-                        } else if (typeof renderFamilyButtons === 'function') {
-                            renderFamilyButtons();
-                        }
+                        // Khởi động nạp dữ liệu thật luôn
+                        generateFamilyInterface();
                         
                     } else {
-                        // 4. Nhập sai mật khẩu
                         alert("Mật khẩu không khớp!");
                     }
                 })
@@ -1345,12 +1335,11 @@ input:checked + .slider:before {
                     alert("Không thể kết nối để xác thực lúc này!");
                 });
         }
-
+        
         function generateFamilyInterface() {
             const container = document.getElementById("family-buttons-container");
             if (!container) return;
             
-            // Hiện chữ đang tải dữ liệu để người dùng biết app đang chạy
             container.innerHTML = "<p style='color: #aaa; text-align: center;'>🔄 Đang tải dữ liệu thành viên từ Google Sheet...</p>";
         
             if (!CONFIG.apiEndpoint) {
@@ -1358,32 +1347,12 @@ input:checked + .slider:before {
                 return;
             }
         
-            // Gọi API lấy dữ liệu thật từ tab FAMILY trên Google Sheet
             fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`)
                 .then(res => res.json())
                 .then(res => {
                     if (res.status === "success" && res.data && res.data.length > 0) {
-                        // Xóa chữ đang tải
-                        container.innerHTML = ""; 
-                        
-                        // Mảng dữ liệu thật từ Sheet trả về
-                        const familyData = res.data; 
-                        
-                        // VẼ CÁC NÚT BẤM THÀNH VIÊN LÊN GIAO DIỆN
-                        familyData.forEach((member, index) => {
-                            const btn = document.createElement("button");
-                            btn.className = "btn-member"; // Đổi class theo đúng CSS nút bấm cũ của bạn
-                            btn.style.margin = "5px";
-                            btn.textContent = member.nickname || member.fullname;
-                            
-                            // Sự kiện khi bấm vào từng thành viên để xem thông tin chi tiết (CCCD, Hộ chiếu...)
-                            btn.onclick = function() {
-                                showMemberDetails(member); // Đổi tên hàm xem chi tiết theo đúng code cũ của bạn
-                            };
-                            
-                            container.appendChild(btn);
-                        });
-                        
+                        // Chuyển giao mảng dữ liệu sang cho hàm render lưới button xử lý
+                        renderFamilyGrid(res.data);
                     } else {
                         container.innerHTML = "<p style='color: #aaa; text-align: center;'>📭 Chưa có dữ liệu thành viên nào trên tab FAMILY của Google Sheet.</p>";
                     }
@@ -1393,50 +1362,86 @@ input:checked + .slider:before {
                     container.innerHTML = "<p style='color: #f44336; text-align: center;'>❌ Lỗi kết nối không thể tải dữ liệu thành viên!</p>";
                 });
         }
-
+        
         function renderFamilyGrid(members) {
             const container = document.getElementById("family-buttons-container");
+            if (!container) return;
             container.innerHTML = "";
+            
             members.forEach(m => {
                 let btn = document.createElement("button");
-                btn.className = "member-btn"; btn.textContent = m.nickname;
+                // Giữ nguyên class gốc của bạn (bạn có thể đổi thành "btn-member" nếu css của bạn dùng tên đó)
+                btn.className = "member-btn"; 
+                btn.style.margin = "5px";
+                btn.textContent = m.nickname || m.fullname;
+                
+                // Liên kết trực tiếp sang hàm mở modal chi tiết
                 btn.onclick = () => showFamilyModal(m);
                 container.appendChild(btn);
             });
         }
-
+        
         function showFamilyModal(m) {
+            // Đã cấu trúc lại để đọc chính xác sơ đồ dữ liệu phân cấp trả về từ hàm doGet mới
             const fields = [
-                { l: "Biệt danh", v: m.nickname }, { l: "Họ tên", v: m.name }, { l: "Ngày sinh", v: m.dob }, { l: "Nơi sinh", v: m.pob }, { l: "Địa chỉ", v: m.address },
-                { l: "CCCD: Số", v: m.cccd_no }, { l: "CCCD: Ngày cấp", v: m.cccd_date }, { l: "CCCD: Ngày hết hạn", v: m.cccd_exp }, { l: "CCCD: Nơi cấp", v: m.cccd_place },
-                { l: "Hộ chiếu: Số", v: m.passport_no }, { l: "Hộ chiếu: Ngày cấp", v: m.passport_date }, { l: "Hộ chiếu: Ngày hết hạn", v: m.passport_exp }, { l: "Hộ chiếu: Nơi cấp", v: m.passport_place },
-                { l: "Thẻ BHYT", v: m.bhyt }, { l: "Mã số thuế", v: m.tax_id }, { l: "LLTP: Số", v: m.lltp_no }, { l: "LLTP: Ngày cấp", v: m.lltp_date }, { l: "LLTP: Nơi cấp", v: m.lltp_place }
+                { l: "Biệt danh", v: m.nickname || "-" }, 
+                { l: "Họ tên", v: m.fullname || "-" }, 
+                { l: "Ngày sinh", v: m.dob || "-" }, 
+                { l: "Nơi sinh", v: m.noisinh || "-" }, 
+                { l: "Địa chỉ", v: m.diachi || "-" },
+                { l: "CCCD: Số", v: m.cccd ? m.cccd.so : "-" }, 
+                { l: "CCCD: Ngày cấp", v: m.cccd ? m.cccd.ngaycap : "-" }, 
+                { l: "CCCD: Ngày hết hạn", v: m.cccd ? m.cccd.ngayhethan : "-" }, 
+                { l: "CCCD: Nơi cấp", v: m.cccd ? m.cccd.noicap : "-" },
+                { l: "Hộ chiếu: Số", v: m.hochieu ? m.hochieu.so : "-" }, 
+                { l: "Hộ chiếu: Ngày cấp", v: m.hochieu ? m.hochieu.ngaycap : "-" }, 
+                { l: "Hộ chiếu: Ngày hết hạn", v: m.hochieu ? m.hochieu.ngayhethan : "-" }, 
+                { l: "Hộ chiếu: Nơi cấp", v: m.hochieu ? m.hochieu.noicap : "-" },
+                { l: "Thẻ BHYT", v: m.bhyt || "-" }, 
+                { l: "Mã số thuế", v: m.masothue || "-" }, 
+                { l: "LLTP: Số", v: m.lltp ? m.lltp.so : "-" }, 
+                { l: "LLTP: Ngày cấp", v: m.lltp ? m.lltp.ngaycap : "-" }, 
+                { l: "LLTP: Nơi cấp", v: m.lltp ? m.lltp.noicap : "-" }
             ];
-
+        
             const detailsDiv = document.getElementById("modal-member-details");
+            if (!detailsDiv) return;
+            
             detailsDiv.innerHTML = "";
             let fullBlockText = "";
-
+        
             fields.forEach(f => {
                 fullBlockText += `${f.l}: ${f.v}\n`;
                 let row = document.createElement("div");
                 row.className = "info-row";
                 row.innerHTML = `<div class="info-label">${f.l}</div><div class="info-value">${f.v}</div>`;
+                
+                // Click vào từng dòng để copy nhanh giá trị
                 row.onclick = () => {
-                    navigator.clipboard.writeText(f.v);
-                    alert(`Đã auto-copy: ${f.v}`);
+                    if(f.v !== "-") {
+                        navigator.clipboard.writeText(f.v);
+                        alert(`Đã auto-copy: ${f.v}`);
+                    }
                 };
                 detailsDiv.appendChild(row);
             });
-
-            document.getElementById("btn-copy-all").onclick = () => {
-                navigator.clipboard.writeText(fullBlockText);
-                alert("Đã copy toàn bộ thông tin lý lịch!");
-            };
-            document.getElementById("familyModal").style.display = "flex";
+        
+            const copyAllBtn = document.getElementById("btn-copy-all");
+            if (copyAllBtn) {
+                copyAllBtn.onclick = () => {
+                    navigator.clipboard.writeText(fullBlockText);
+                    alert("Đã copy toàn bộ thông tin lý lịch!");
+                };
+            }
+            
+            const modal = document.getElementById("familyModal");
+            if (modal) modal.style.display = "flex";
         }
-
-        function closeModal() { document.getElementById("familyModal").style.display = "none"; }
+        
+        function closeModal() { 
+            const modal = document.getElementById("familyModal");
+            if (modal) modal.style.display = "none"; 
+        }
 
         // ============================================================
         // THEME FUNCTIONS - FIXED FOR DARK/LIGHT MODE
@@ -1732,6 +1737,7 @@ input:checked + .slider:before {
                 { label: "Nơi sinh", value: member.noisinh, category: "Thông tin chung" },
                 { label: "Địa chỉ", value: member.diachi, category: "Thông tin chung" },
                 { label: "Mã số thuế", value: member.masothue, category: "Thông tin chung" },
+                { label: "Số BHXH", value: member.bhxh, category: "Thông tin chung" },
                 { label: "Số BHYT", value: member.bhyt, category: "Thông tin chung" },
                 
                 { label: "Số CCCD", value: member.cccd?.so || "--", category: "Căn cước công dân" },
