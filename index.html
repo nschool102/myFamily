@@ -672,30 +672,30 @@ input:checked + .slider:before {
     </div>
 
     <!-- TAB FAMILY -->
-    <div id="tab-family" class="tab-content">
-        <div class="card">
-            <h3>Thành viên gia đình</h3>
-            <div id="family-buttons-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
-                <p id="family-loading-text">Đang tải dữ liệu từ Google Sheet...</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="family-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span onclick="closeFamilyModal()" class="modal-close" style="position: absolute; top: 12px; right: 18px; font-size: 24px; cursor: pointer; color: var(--text-color);">&times;</span>
-            
-            <h3 id="modal-nickname" style="color: var(--theme-color); margin-top: 5px; margin-bottom: 15px; padding-right: 20px;">Biệt danh</h3>
-            <p style="font-size: 12px; color: var(--stat-label-color); margin-top: -10px; margin-bottom: 15px;">* Chạm vào từng dòng để sao chép nhanh giá trị</p>
-
-            <div id="modal-fields-container"></div>
-
-            <button class="btn" id="btn-copy-all" style="background-color: var(--theme-color); width: 100%; margin-top: 20px; font-weight: bold;">
-                Sao chép toàn bộ thông tin
+    <div id="tab-family" class="tab-content" style="display: none;">
+    
+        <div id="family-lock-screen" class="card" style="text-align: center; padding: 40px 20px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
+            <h3>Nội dung này được bảo mật</h3>
+            <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">
+                Vui lòng xác thực mật khẩu cấu hình từ Google Sheet để xem thông tin gia đình.
+            </p>
+            <button class="btn" onclick="unlockFamilyTab()" style="width: 100%; max-width: 250px; margin: 0 auto;">
+                🔑 Nhập mật khẩu để xem
             </button>
         </div>
-    </div>
 
+        <div id="family-content" style="display: none;">
+            <div class="card">
+                <h3>Thành viên gia đình</h3>
+                <div id="family-buttons-container"></div>
+            </div>
+        </div>
+
+    </div> <!-- end TAB FAMILY -->
+
+
+    <!-- TAB SETTINGS -->
     <div id="tab-settings" class="tab-content">
         <div class="card">
             <h3>Thay Đổi Giao Diện</h3>
@@ -728,6 +728,9 @@ input:checked + .slider:before {
             </p>
             <button class="btn" id="btn-sync-data" onclick="syncAllDataFromSheet()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 🔄 Đồng bộ dữ liệu ngay
+            </button>
+            <button class="btn" onclick="resetAppCompletely()" style="background-color: #F44336 !important; color: #fff !important; width: 100%; margin-top: 10px;">
+                🗑️ Xóa sạch dữ liệu & Đặt lại App
             </button>
         </div>
 
@@ -765,7 +768,7 @@ input:checked + .slider:before {
             </form>
             <div id="recurring-rules-list" style="margin-top:15px;"></div>
         </div>
-    </div>
+    </div> <!-- end TAB SETTINGS -->
 
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('chi')">Chi</button>
@@ -781,7 +784,6 @@ input:checked + .slider:before {
         // BIẾN CẤU HÌNH TOÀN CỤC CỦA BẠN
         const CONFIG = {
             googleSheetId: '1t7aAWY-bUNdVxphqGPvKeM6UyXrW4BiMuF5NHR4A7NU', 
-            familyPassword: '123', // Mật khẩu truy cập tab Family
             apiEndpoint: 'https://script.google.com/macros/s/AKfycbzsrG_EpTW2FgX9FQ0opVVQKBKImKbHXwXg1-eeLxD8Up35AYWIWWRu2V2tNLVTWNSw/exec' 
         };
 
@@ -927,6 +929,10 @@ input:checked + .slider:before {
 
             if (tabName === 'chi' || tabName === 'thongke') {
                 renderChartsAndStats();
+            }
+            // BỔ SUNG ĐOẠN KIỂM TRA NÀY:
+            if (tabId === "family") {
+                checkFamilyTabAccess();
             }
         }
 
@@ -1212,12 +1218,112 @@ input:checked + .slider:before {
         }
 
         // Tab Family Security và xử lý Tự động sao chép clipboard
+        // Hàm thực hiện kiểm tra mật khẩu để mở khóa tab Family
+        function unlockFamilyTab() {
+            const userPassword = prompt("🔒 Nhập mật khẩu xác thực tab Family:");
+            
+            if (userPassword === null || userPassword.trim() === "") return;
+            if (!CONFIG.apiEndpoint) {
+                alert("Chưa cấu hình API URL!");
+                return;
+            }
+
+            // Gọi lên Sheet kiểm tra chéo mật khẩu ở ô E2 tab DANH MỤC
+            fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(userPassword.trim())}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === "success" && res.match === true) {
+                        // Nhập đúng -> Lưu trạng thái đã mở khóa vào bộ nhớ máy
+                        localStorage.setItem("family_unlocked", "true");
+                        
+                        // Hiển thị nội dung, ẩn màn hình khóa
+                        document.getElementById("family-lock-screen").style.display = "none";
+                        document.getElementById("family-content").style.display = "block";
+                        
+                        // Nếu bạn có hàm vẽ các nút thành viên thì gọi ở đây để nạp dữ liệu luôn
+                        if (typeof renderFamilyButtons === 'function') renderFamilyButtons();
+                        
+                    } else {
+                        alert("❌ Mật khẩu không chính xác! Không thể truy cập thông tin.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi xác thực:", err);
+                    alert("Lỗi kết nối hệ thống xác thực.");
+                });
+        }
+
+        // Hàm kiểm tra trạng thái mở khóa mỗi khi người dùng bấm chuyển tab vào tab Family
+        // Bạn hãy tìm hàm điều hướng tab hiện tại của mình (ví dụ: switchTab('family')) và gọi hàm này vào.
+        function checkFamilyTabAccess() {
+            const isUnlocked = localStorage.getItem("family_unlocked") === "true";
+            
+            const lockScreen = document.getElementById("family-lock-screen");
+            const actualContent = document.getElementById("family-content");
+            
+            if (!lockScreen || !actualContent) return;
+
+            if (isUnlocked) {
+                lockScreen.style.display = "none";
+                actualContent.style.display = "block";
+            } else {
+                lockScreen.style.display = "block";
+                actualContent.style.display = "none";
+            }
+        }
+
         function verifyFamilyAuth() {
-            if (document.getElementById("family-password").value === CONFIG.familyPassword) {
-                document.getElementById("family-auth-view").style.display = "none";
-                document.getElementById("family-main-view").style.display = "block";
-                generateFamilyInterface();
-            } else { alert("Mật khẩu không khớp!"); }
+            const inputPass = document.getElementById("family-password").value;
+            
+            if (!inputPass.trim()) {
+                alert("Vui lòng nhập mật khẩu!");
+                return;
+            }
+            
+            if (!CONFIG.apiEndpoint) {
+                alert("Chưa cấu hình API URL!");
+                return;
+            }
+
+            // Đổi chữ nút bấm thành trạng thái đang check (nếu có nút bấm gọi hàm này)
+            // Hoặc xử lý trực tiếp fetch gửi lên Google Sheet để xác thực bảo mật
+            fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(inputPass.trim())}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === "success" && res.match === true) {
+                        // 1. Nhập đúng -> Lưu trạng thái đã mở khóa để lần sau không hỏi lại
+                        localStorage.setItem("family_unlocked", "true");
+                        
+                        // 2. Ẩn màn hình khóa, hiện màn hình nội dung chính
+                        // (Tên ID điều chỉnh khớp theo các thẻ div hiện tại của bạn)
+                        if (document.getElementById("family-auth-view")) {
+                            document.getElementById("family-auth-view").style.display = "none";
+                        } else if (document.getElementById("family-lock-screen")) {
+                            document.getElementById("family-lock-screen").style.display = "none";
+                        }
+                        
+                        if (document.getElementById("family-main-view")) {
+                            document.getElementById("family-main-view").style.display = "block";
+                        } else if (document.getElementById("family-content")) {
+                            document.getElementById("family-content").style.display = "block";
+                        }
+                        
+                        // 3. Khởi tạo nạp dữ liệu danh sách thành viên
+                        if (typeof generateFamilyInterface === 'function') {
+                            generateFamilyInterface();
+                        } else if (typeof renderFamilyButtons === 'function') {
+                            renderFamilyButtons();
+                        }
+                        
+                    } else {
+                        // 4. Nhập sai mật khẩu
+                        alert("Mật khẩu không khớp!");
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi xác thực tab Family:", err);
+                    alert("Không thể kết nối đến Google Sheet để xác thực lúc này!");
+                });
         }
 
         // Tạo 7 Button định danh Nickname cho các thành viên
@@ -1656,6 +1762,53 @@ input:checked + .slider:before {
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(loadFamilyDataFromSheet, 1000);
         });
+
+        // XÓA TOÀN BỘ DỮ LIỆU APP VÀ ĐẶT LẠI
+        function resetAppCompletely() {
+            // 1. Lớp xác nhận đầu tiên tránh bấm nhầm
+            if (!confirm("CẢNH BÁO: Hành động này sẽ xóa toàn bộ lịch sử, cấu hình lưu trên thiết bị này và tải lại trang. Bạn có chắc chắn không?")) {
+                return;
+            }
+            
+            // 2. Yêu cầu người dùng nhập mật khẩu
+            const userPassword = prompt("🔒 Vui lòng nhập mật khẩu xác nhận lấy từ Google Sheet để xóa dữ liệu:");
+            
+            if (userPassword === null || userPassword.trim() === "") {
+                return; // Người dùng bấm Hủy hoặc không nhập gì
+            }
+            
+            if (!CONFIG.apiEndpoint) {
+                alert("Chưa cấu hình API URL để kiểm tra mật khẩu!");
+                return;
+            }
+
+            // 3. Gửi mật khẩu lên Google Sheet để check bảo mật kín
+            fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(userPassword.trim())}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === "success" && res.match === true) {
+                        
+                        // MẬT KHẨU ĐÚNG -> TIẾN HÀNH XÓA SẠCH
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        
+                        if (window.indexedDB) {
+                            indexedDB.deleteDatabase("settings");
+                        }
+                        
+                        alert("🗑️ Đã xác thực thành công! Toàn bộ bộ nhớ đệm thiết bị đã được xóa sạch. Ứng dụng đang tải lại...");
+                        window.location.reload(true); 
+                        
+                    } else {
+                        // MẬT KHẨU SAI
+                        alert("❌ Mật khẩu không chính xác! Bạn không có quyền xóa dữ liệu ứng dụng.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi xác thực mật khẩu:", err);
+                    alert("Không thể kết nối đến hệ thống để xác thực mật khẩu lúc này!");
+                });
+        }
 
         // HIỂN THỊ LỊCH SỬ GIAO DỊCH (Nếu số tiền < 0: Hiển thị dấu trừ, màu đỏ (Chi). Nếu số tiền > 0: Hiển thị dấu cộng, màu xanh (Thu) và tự động làm tròn số tiền theo định dạng tiền tệ VNĐ gọn gàng.)
         function loadTransactionHistory() {
