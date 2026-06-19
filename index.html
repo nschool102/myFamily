@@ -598,7 +598,7 @@ input:checked + .slider:before {
             <div id="top-expenses-list"></div>
         </div>
         <div class="card" style="margin-top: 15px;">
-            <h3>Lịch sử Khoản Chi (20 giao dịch gần nhất)</h3>
+            <h3>Lịch sử Chi</h3>
             <div id="expense-history-container">Đang tải lịch sử chi...</div>
         </div>
     </div>
@@ -631,7 +631,7 @@ input:checked + .slider:before {
             </form>
         </div>
         <div class="card" style="margin-top: 15px;">
-            <h3>Lịch sử Khoản Thu (20 giao dịch gần nhất)</h3>
+            <h3>Lịch sử Thu</h3>
             <div id="income-history-container">Đang tải lịch sử thu...</div>
         </div>
     </div>
@@ -673,6 +673,9 @@ input:checked + .slider:before {
             <div class="stat-row"><span>Tổng Thu:</span><strong id="sec4-thu">0</strong></div>
             <div class="stat-row"><span>Tổng Chi:</span><strong id="sec4-net-chi">0</strong></div>
             <div class="stat-row"><span>Tổng Số Tiền Tiết Kiệm:</span><strong id="sec4-savings" style="color:var(--theme-color);">0</strong></div>
+            <div class="chart-container">
+                <canvas id="chart-sec4-pie"></canvas>
+            </div>
         </div>
     </div>
 
@@ -1094,18 +1097,26 @@ input:checked + .slider:before {
                 const s3Mine = document.getElementById("sec3-Mine"); if(s3Mine) s3Mine.textContent = formatVND(sum_Mine);
                 const s3Tiger = document.getElementById("sec3-Tiger"); if(s3Tiger) s3Tiger.textContent = formatVND(sum_Tiger);
                 renderPieChart('chart-sec3-pie', ['A (MÌNH)', 'B (CON CỢP)'], [sum_Mine, sum_Tiger]);
+                renderPieChart(
+                    'chart-sec3-pie', 
+                    ['A (MÌNH)', 'B (CON CỢP)'], 
+                    [sum_Mine, sum_Tiger], 
+                    ['#8BC34A', '#E91E63']
+                );
 
                 renderSection4(data);
             });
         }
 
-        function renderPieChart(canvasId, labels, dataset) {
+        // Cập nhật hàm vẽ biểu đồ để hỗ trợ tùy biến màu sắc linh hoạt
+        function renderPieChart(canvasId, labels, dataset, customColors = null) {
             if (charts[canvasId]) charts[canvasId].destroy();
             const canvasEl = document.getElementById(canvasId);
             if (!canvasEl) return;
             const ctx = canvasEl.getContext('2d');
             
             let total = dataset.reduce((a, b) => a + Math.abs(b), 0);
+            let defaultColors = ['#4CAF50', '#F44336', '#FF9800', '#2196F3', '#9C27B0', '#E91E63'];
             
             charts[canvasId] = new Chart(ctx, {
                 type: 'pie',
@@ -1113,7 +1124,7 @@ input:checked + .slider:before {
                     labels: labels,
                     datasets: [{
                         data: dataset,
-                        backgroundColor: ['#4CAF50', '#F44336', '#FF9800', '#2196F3', '#9C27B0', '#E91E63']
+                        backgroundColor: customColors || defaultColors
                     }]
                 },
                 plugins: [ChartDataLabels], 
@@ -1122,7 +1133,11 @@ input:checked + .slider:before {
                     maintainAspectRatio: false,
                     plugins: {
                         datalabels: {
-                            color: '#ffffff', 
+                            color: function(context) {
+                                // Nếu nền màu vàng quá sáng, đổi chữ sang màu tối để không bị lóa mắt
+                                let bgColor = context.dataset.backgroundColor[context.dataIndex];
+                                return (bgColor === '#FFEB3B' || bgColor === '#8BC34A') ? '#111111' : '#ffffff';
+                            },
                             font: { weight: 'bold', size: 12 },
                             anchor: 'center', 
                             align: 'center',
@@ -1144,6 +1159,59 @@ input:checked + .slider:before {
                     }
                 }
             });
+        }
+
+        // Cập nhật hàm Render Section 4 và bổ sung Pie Chart
+        function renderSection4(allData) {
+            const periodSelect = document.getElementById("sec4-period");
+            if(!periodSelect) return;
+            const period = periodSelect.value;
+            
+            const run = (data) => {
+                const now = new Date();
+                let currentBalance = 0;
+                let totalThu = 0, fullChi = 0, investmentSavings = 0;
+
+                data.forEach(t => {
+                    let d = new Date(t.timestamp);
+                    currentBalance += t.amount; 
+
+                    let isMatch = (period === 'month') ? 
+                        (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) : 
+                        (d.getFullYear() === now.getFullYear());
+
+                    if (isMatch) {
+                        if (t.amount > 0) {
+                            totalThu += t.amount;
+                        } else {
+                            let absAmt = Math.abs(t.amount);
+                            // Tính tổng các khoản có type là "Đầu tư, tiết kiệm"
+                            if (t.type === "Đầu tư, tiết kiệm") {
+                                investmentSavings += absAmt;
+                            } else {
+                                fullChi += absAmt;
+                            }
+                        }
+                    }
+                });
+
+                // Tổng chi thực tế = Tổng chi ban đầu - Tiết kiệm (ở đây fullChi chính là phần chi đã loại trừ tiết kiệm)
+                const netChi = fullChi; 
+
+                const s4Bal = document.getElementById("sec4-balance"); if(s4Bal) s4Bal.textContent = formatVND(currentBalance);
+                const s4Thu = document.getElementById("sec4-thu"); if(s4Thu) s4Thu.textContent = formatVND(totalThu);
+                const s4Chi = document.getElementById("sec4-net-chi"); if(s4Chi) s4Chi.textContent = formatVND(netChi);
+                const s4Sav = document.getElementById("sec4-savings"); if(s4Sav) s4Sav.textContent = formatVND(investmentSavings);
+
+                // Vẽ biểu đồ tròn Section 4: Thu (Xanh), Chi (Đỏ), Tiết kiệm (Vàng)
+                renderPieChart(
+                    'chart-sec4-pie', 
+                    ['Tổng Thu', 'Tổng Chi Thực Tế', 'Tiết Kiệm'], 
+                    [totalThu, netChi, investmentSavings],
+                    ['#4CAF50', '#F44336', '#FFEB3B']
+                );
+            };
+            if (allData) run(allData); else getAllTransactions(run);
         }
 
         function renderTopExpenses() {
@@ -1180,41 +1248,7 @@ input:checked + .slider:before {
             });
         }
 
-        function renderSection4(allData) {
-            const periodSelect = document.getElementById("sec4-period");
-            if(!periodSelect) return;
-            const period = periodSelect.value;
-            
-            const run = (data) => {
-                const now = new Date();
-                let currentBalance = 0;
-                let totalThu = 0, rawChi = 0, investmentSavings = 0;
-
-                data.forEach(t => {
-                    let d = new Date(t.timestamp);
-                    currentBalance += t.amount; 
-
-                    let isMatch = (period === 'month') ? 
-                        (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) : 
-                        (d.getFullYear() === now.getFullYear());
-
-                    if (isMatch) {
-                        if (t.amount > 0) totalThu += t.amount;
-                        else {
-                            let absAmt = Math.abs(t.amount);
-                            if (t.type === "Đầu tư, tiết kiệm") investmentSavings += absAmt;
-                            else rawChi += absAmt;
-                        }
-                    }
-                });
-
-                const s4Bal = document.getElementById("sec4-balance"); if(s4Bal) s4Bal.textContent = formatVND(currentBalance);
-                const s4Thu = document.getElementById("sec4-thu"); if(s4Thu) s4Thu.textContent = formatVND(totalThu);
-                const s4Chi = document.getElementById("sec4-net-chi"); if(s4Chi) s4Chi.textContent = formatVND(rawChi);
-                const s4Sav = document.getElementById("sec4-savings"); if(s4Sav) s4Sav.textContent = formatVND(investmentSavings);
-            };
-            if (allData) run(allData); else getAllTransactions(run);
-        }
+        // 1251
 
         function checkFamilyTabAccess() {
             const isUnlocked = localStorage.getItem("family_unlocked") === "true";
