@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TIỀN CỦA TÔI</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,8 +12,8 @@
    1. KHAI BÁO BIẾN TOÀN CỤC (CSS VARIABLES)
    ========================================================================== */
 :root {
-    --theme-color: #e91e63;
-    --text-on-theme: #ffffff;
+    --theme-color: #8BC34A;
+    --text-on-theme: #111111;
     
     --primary-bg: #ffffff;
     --secondary-bg: #f5f5f5;
@@ -41,7 +41,7 @@
 }
 
 /* ==========================================================================
-   2. DARK MODE - GHI ĐÈ CÁC BIẾN
+   2. DARK MODE - GHI ĐÈ CÁC BIẾN (MẶC ĐỊNH BẬT)
    ========================================================================== */
 [data-theme="dark"] {
     --primary-bg: #121212;
@@ -66,9 +66,6 @@
     --stat-label-color: #999;
 }
 
-/* ==========================================================================
-   3. CHỐNG LÓA CHO MÀU VÀNG (CẢ LIGHT VÀ DARK)
-   ========================================================================== */
 .theme-yellow {
     --text-on-theme: #111111;
 }
@@ -79,7 +76,7 @@
 }
 
 /* ==========================================================================
-   4. RESET & BODY
+   3. RESET & BODY
    ========================================================================== */
 * {
     box-sizing: border-box;
@@ -92,13 +89,11 @@ body {
     background-color: var(--secondary-bg);
     color: var(--text-color);
     transition: background-color 0.3s ease, color 0.3s ease;
-    /* Tăng khoảng đệm đáy để nội dung không bị thanh điều hướng che */
-    padding-bottom: calc(85px + env(safe-area-inset-bottom)); 
+    padding-bottom: calc(90px + env(safe-area-inset-bottom)); 
 }
 
-
 /* ==========================================================================
-   5. HEADER
+   4. HEADER
    ========================================================================== */
 .header {
     background-color: var(--header-bg);
@@ -120,23 +115,26 @@ body {
 }
 
 /* ==========================================================================
-   6. NAVIGATION TABS (Bottom)
+   5. NAVIGATION TABS (Căn giữa, giới hạn rộng cho iPhone màn lớn)
    ========================================================================== */
 .nav-tabs {
     position: fixed;
     bottom: 0;
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%);
     width: 100%;
+    max-width: 600px; /* Giới hạn chiều rộng bằng khu vực nội dung card, không bị tràn hết viền màn hình ngang */
     background-color: var(--nav-bg);
     display: flex;
     justify-content: space-around;
     border-top: 1px solid var(--nav-border);
+    border-left: 1px solid var(--nav-border);
+    border-right: 1px solid var(--nav-border);
+    border-radius: 12px 12px 0 0;
     z-index: 100;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
     transition: background-color 0.3s ease, border-color 0.3s ease;
-    
-    /* Đẩy các nút lên trên vùng an toàn của iPhone 16 Pro Max */
-    padding-bottom: env(safe-area-inset-bottom, 15px); 
+    padding-bottom: env(safe-area-inset-bottom, 15px); /* Khoảng cách an toàn cho thanh vuốt iPhone 16 Pro Max */
 }
 
 .tab-btn {
@@ -160,7 +158,7 @@ body {
 }
 
 /* ==========================================================================
-   7. TAB CONTENT
+   6. TAB CONTENT
    ========================================================================== */
 .tab-content {
     display: none;
@@ -174,7 +172,7 @@ body {
 }
 
 /* ==========================================================================
-   8. CARDS
+   7. CARDS
    ========================================================================== */
 .card {
     background-color: var(--card-bg);
@@ -193,7 +191,7 @@ body {
 }
 
 /* ==========================================================================
-   9. FORM
+   8. FORM
    ========================================================================== */
 .form-group {
     margin-bottom: 15px;
@@ -224,13 +222,8 @@ body {
     border-color: var(--theme-color);
 }
 
-.form-control option {
-    background-color: var(--input-bg);
-    color: var(--text-color);
-}
-
 /* ==========================================================================
-   10. BUTTONS
+   9. BUTTONS
    ========================================================================== */
 .btn {
     background-color: var(--theme-color) !important;
@@ -251,24 +244,29 @@ body {
 }
 
 /* ==========================================================================
-   11. FAMILY GRID - MEMBER BUTTONS
+   10. FAMILY GRID - CHIA 2 CỘT CỐ ĐỊNH, CHỮ THU GỌN VỪA VẶN KHÔNG PHẢI ZOOM
    ========================================================================== */
 .family-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important; /* Luôn luôn giữ đúng 2 cột cố định kể cả trên điện thoại */
+    gap: 10px !important;
+    width: 100%;
 }
 
 .member-btn {
     background-color: var(--theme-color);
     color: var(--text-on-theme);
     border: none;
-    padding: 16px;
+    padding: 12px 8px; /* Giảm padding một chút cho nút đỡ thô */
     border-radius: 8px;
     font-weight: bold;
+    font-size: 0.9rem; /* Giữ font chữ vừa phải để không bị vỡ hoặc đẩy giao diện */
     cursor: pointer;
     text-align: center;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Nếu tên quá dài tự động thêm dấu ... gọn gàng */
 }
 
 .member-btn:active {
@@ -277,7 +275,7 @@ body {
 }
 
 /* ==========================================================================
-   12. MODAL
+   11. MODAL
    ========================================================================== */
 .modal {
     display: none;
@@ -290,11 +288,6 @@ body {
     z-index: 1000;
     justify-content: center;
     align-items: center;
-    transition: all 0.3s ease;
-}
-
-.modal.show {
-    display: flex;
 }
 
 .modal-content {
@@ -307,7 +300,6 @@ body {
     max-height: 85vh;
     overflow-y: auto;
     position: relative;
-    transition: all 0.3s ease;
 }
 
 .modal-close {
@@ -322,13 +314,12 @@ body {
 }
 
 /* ==========================================================================
-   13. INFO ROWS
+   12. INFO ROWS
    ========================================================================== */
 .info-row {
     padding: 12px 8px;
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
-    transition: background 0.2s;
 }
 
 .info-row:hover {
@@ -348,12 +339,11 @@ body {
 }
 
 /* ==========================================================================
-   14. SCROLL TO TOP BUTTON
+   13. SCROLL TO TOP BUTTON
    ========================================================================== */
 .scroll-top {
     position: fixed;
-    /* Tự động đẩy cao tương ứng theo vùng an toàn */
-    bottom: calc(90px + env(safe-area-inset-bottom)); 
+    bottom: calc(95px + env(safe-area-inset-bottom)); 
     right: 20px;
     background-color: var(--scroll-bg);
     color: var(--scroll-text);
@@ -369,7 +359,6 @@ body {
     font-weight: bold;
     font-size: 1.3rem;
     z-index: 99;
-    transition: all 0.3s ease;
 }
 
 .scroll-top.show {
@@ -377,7 +366,7 @@ body {
 }
 
 /* ==========================================================================
-   15. CHART & STATISTICS
+   14. CHART & STATISTICS
    ========================================================================== */
 .chart-container {
     position: relative;
@@ -405,7 +394,7 @@ body {
 }
 
 /* ==========================================================================
-   16. ALERT BOX
+   15. ALERT BOX
    ========================================================================== */
 .alert-box {
     background-color: rgba(244, 67, 54, 0.08);
@@ -422,7 +411,7 @@ body {
 }
 
 /* ==========================================================================
-   17. DARK MODE TOGGLE SWITCH
+   16. DARK MODE TOGGLE SWITCH
    ========================================================================== */
 .theme-switch-wrapper {
     display: flex;
@@ -477,7 +466,7 @@ input:checked + .slider:before {
 }
 
 /* ==========================================================================
-   18. FAMILY MODAL DARK MODE FIX
+   17. FAMILY MODAL DARK MODE FIX
    ========================================================================== */
 #familyModal .modal-content {
     background: var(--modal-content-bg);
@@ -501,31 +490,13 @@ input:checked + .slider:before {
     color: var(--text-on-theme) !important;
 }
 
-/* ==========================================================================
-   19. UTILITY CLASSES
-   ========================================================================== */
-.theme-text {
-    color: var(--theme-color) !important;
-}
-
-.theme-bg {
-    background-color: var(--theme-color) !important;
-    color: var(--text-on-theme) !important;
-}
-
-.text-muted {
-    color: var(--text-color);
-    opacity: 0.6;
-}
+.theme-text { color: var(--theme-color) !important; }
+.theme-bg { background-color: var(--theme-color) !important; color: var(--text-on-theme) !important; }
 
 /* ==========================================================================
-   20. RESPONSIVE
+   18. RESPONSIVE
    ========================================================================== */
 @media (max-width: 480px) {
-    .family-grid {
-        grid-template-columns: repeat(2, 1fr); /* Giữ nguyên mỗi hàng 2 nút trên mobile */
-    }
-    
     .header {
         font-size: 1rem;
         padding: 12px;
@@ -540,6 +511,10 @@ input:checked + .slider:before {
         width: 95%;
         padding: 15px;
     }
+    
+    .family-grid {
+        grid-template-columns: repeat(2, 1fr) !important; /* Đảm bảo tuyệt đối trên mobile vẫn là 2 cột */
+    }
 }
     </style>
 </head>
@@ -547,7 +522,6 @@ input:checked + .slider:before {
 
     <div class="header" id="app-title">💰 TIỀN CỦA TÔI 💰</div>
 
-    <!-- TAB CHI -->
     <div id="tab-chi" class="tab-content active">
         <div class="card">
             <h3>Nhập Khoản Chi</h3>
@@ -599,9 +573,7 @@ input:checked + .slider:before {
             <div id="expense-history-container">Đang tải lịch sử chi...</div>
         </div>
     </div>
-    <!-- end TAB CHI -->
 
-    <!-- TAB THU -->
     <div id="tab-thu" class="tab-content">
         <div class="card">
             <h3>Nhập Khoản Thu</h3>
@@ -634,9 +606,7 @@ input:checked + .slider:before {
             <div id="income-history-container">Đang tải lịch sử thu...</div>
         </div>
     </div>
-    <!-- end TAB THU -->
 
-    <!-- TAB THỐNG KÊ -->
     <div id="tab-thongke" class="tab-content">
         <div class="card">
             <h3>Section 1: Cảnh Báo Vượt Hạn Mức (So với tháng trước)</h3>
@@ -679,9 +649,7 @@ input:checked + .slider:before {
             </div>
         </div>
     </div>
-    <!-- end TAB THỐNG KÊ -->
 
-    <!-- TAB FAMILY -->
     <div id="tab-family" class="tab-content">
         <div id="family-auth-view" class="card" style="text-align: center; padding: 40px 20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
@@ -696,25 +664,20 @@ input:checked + .slider:before {
         <div id="family-main-view" style="display: none;">
             <div class="card">
                 <h3>Thành viên gia đình</h3>
-                <div id="family-buttons-container"></div>
+                <div id="family-buttons-container" class="family-grid"></div>
             </div>
         </div>
     </div>
 
-        <!-- MODAL FAMILY -->
-        <div id="familyModal" class="modal">
-            <div class="modal-content">
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-                <h3 id="modal-member-title" style="margin-top: 0; margin-bottom: 15px; color: var(--theme-color);">Thông tin lý lịch</h3>
-                <div id="modal-member-details" style="margin-bottom: 20px;"></div>
-                <button id="btn-copy-all" class="btn">📋 Sao chép toàn bộ thông tin</button>
-            </div>
+    <div id="familyModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h3 id="modal-member-title" style="margin-top: 0; margin-bottom: 15px; color: var(--theme-color);">Thông tin lý lịch</h3>
+            <div id="modal-member-details" style="margin-bottom: 20px;"></div>
+            <button id="btn-copy-all" class="btn">📋 Sao chép toàn bộ thông tin</button>
         </div>
-        <!-- end MODAL FAMILY -->
+    </div>
 
-    <!-- end TAB FAMILY -->
- 
-    <!-- TAB SETTINGS -->
     <div id="tab-settings" class="tab-content">
         <div class="card">
             <h3>Thay Đổi Giao Diện</h3>
@@ -749,7 +712,6 @@ input:checked + .slider:before {
             <button class="btn" onclick="resetAppCompletely()" style="background-color: #F44336 !important; color: #fff !important; width: 100%; margin-top: 15px;">🗑️ Xóa sạch dữ liệu & Đặt lại App</button>
         </div>
     </div>
-    <!-- end TAB SETTINGS -->
 
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('chi')">Chi</button>
@@ -803,17 +765,15 @@ input:checked + .slider:before {
                 db = e.target.result;
                 loadInitialSettings();
             };
-        } // end function initDB
+        }
 
         function formatCurrency(input) {
             let value = input.value.replace(/[^0-9.]/g, "");
             let parts = value.split(".");
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
             input.value = parts.join(".");
-        } // end function formatCurrency
-
+        }
         function parseCurrency(str) { return str ? parseFloat(str.replace(/,/g, "")) : 0; }
-        
         function formatVND(num) { return num.toLocaleString('en-US') + " đ"; }
 
         function updateSubtypes(mode) {
@@ -830,7 +790,7 @@ input:checked + .slider:before {
                     subtypeSelect.appendChild(opt);
                 });
             }
-        } // end function updateSubtypes
+        }
 
         function initFormOptions() {
             ['chi', 'thu'].forEach(mode => {
@@ -849,7 +809,7 @@ input:checked + .slider:before {
                 const dateInput = document.getElementById(`${mode}-date`);
                 if(dateInput) dateInput.value = now.toISOString().slice(0,16);
             });
-        } // end function initFormOptions
+        }
 
         function switchTab(tabName) {
             document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
@@ -869,7 +829,7 @@ input:checked + .slider:before {
             });
             if (tabName === 'chi' || tabName === 'thongke') renderChartsAndStats();
             if (tabName === 'family') checkFamilyTabAccess();
-        } // end function switchTab
+        }
 
         function saveTransaction(event, mode) {
             event.preventDefault();
@@ -895,17 +855,16 @@ input:checked + .slider:before {
                 renderChartsAndStats();
                 syncToGoogleSheets();
             };
-        } // end function saveTransaction
+        }
 
         function getAllTransactions(callback) {
             if (!db) return;
             db.transaction("transactions", "readonly").objectStore("transactions").getAll().onsuccess = function(e) {
                 callback(e.target.result);
             };
-        } // end function getAllTransactions
+        }
 
         let isSyncing = false; 
-
         function syncToGoogleSheets() {
             if (!navigator.onLine || isSyncing || !CONFIG.apiEndpoint) return;
             getAllTransactions(transactions => {
@@ -928,13 +887,8 @@ input:checked + .slider:before {
                     isSyncing = false; 
                 }).catch(() => { isSyncing = false; });
             });
-        } // end function syncToGoogleSheets
-
+        }
         window.addEventListener('online', syncToGoogleSheets);
-
-        // ==========================================================================
-        // CÁC HÀM VẼ CHART
-        // ==========================================================================
 
         function renderPieChart(canvasId, labels, dataset, customColors = null) {
             if (charts[canvasId]) charts[canvasId].destroy();
@@ -962,7 +916,7 @@ input:checked + .slider:before {
                     }
                 }
             });
-        } // end function renderPieChart
+        }
 
         function renderChartsAndStats() {
             getAllTransactions(data => {
@@ -1028,7 +982,7 @@ input:checked + .slider:before {
 
                 renderSection4(data);
             });
-        } // end function renderChartsAndStats
+        }
 
         function renderTopExpenses() {
             const periodSelect = document.getElementById("chi-top-period");
@@ -1048,7 +1002,7 @@ input:checked + .slider:before {
                 if(!container) return;
                 container.innerHTML = filtered.length ? filtered.slice(0, 5).map((t, i) => `<div class="stat-row"><span>${i+1}. ${t.type} (${t.subtype}) ${t.note ? '- '+t.note : ''}</span><strong style="color:var(--danger-color);">${formatVND(Math.abs(t.amount))}</strong></div>`).join('') : "<p>Không có dữ liệu chi tiêu.</p>";
             });
-        } // end function renderTopExpenses
+        }
 
         function renderSection4(allData) {
             const periodSelect = document.getElementById("sec4-period");
@@ -1076,11 +1030,7 @@ input:checked + .slider:before {
                 renderPieChart('chart-sec4-pie', ['Tổng Thu', 'Tổng Chi Thực Tế', 'Tiết Kiệm'], [totalThu, fullChi, investmentSavings], ['#4CAF50', '#F44336', '#FFEB3B']);
             };
             if (allData) run(allData); else getAllTransactions(run);
-        } // end function renderSection4
-
-        // ==========================================================================
-        // CÁC HÀM FAMILY
-        // ==========================================================================
+        }
 
         function checkFamilyTabAccess() {
             const isUnlocked = localStorage.getItem("family_unlocked") === "true";
@@ -1096,7 +1046,7 @@ input:checked + .slider:before {
                 authView.style.setProperty("display", "block", "important");
                 mainView.style.setProperty("display", "none", "important");
             }
-        } // end function checkFamilyTabAccess
+        }
 
         function verifyFamilyAuth() {
             const inputPass = document.getElementById("family-password").value;
@@ -1109,7 +1059,7 @@ input:checked + .slider:before {
                         checkFamilyTabAccess();
                     } else alert("Mật khẩu không khớp!");
                 }).catch(() => { alert("Không thể kết nối xác thực!"); });
-        } // end function verifyFamilyAuth
+        }
         
         function generateFamilyInterface() {
             const container = document.getElementById("family-buttons-container");
@@ -1126,35 +1076,25 @@ input:checked + .slider:before {
                         renderFamilyGrid(res.data);
                     } else container.innerHTML = "<p style='color: #aaa; text-align: center;'>📭 Chưa có dữ liệu.</p>";
                 }).catch(() => { container.innerHTML = "<p style='color: #f44336; text-align: center;'>❌ Lỗi kết nối!</p>"; });
-        } // end function generateFamilyInterface
+        }
         
         function renderFamilyGrid(members) {
             const container = document.getElementById("family-buttons-container");
             if (!container) return; 
             container.innerHTML = "";
             
-            // Thêm class family-grid vào container để kích hoạt chia cột
+            // Ép class lưới grid hoạt động chuẩn chỉnh cố định
             container.className = "family-grid"; 
             
             members.forEach(m => {
                 let btn = document.createElement("button"); 
                 btn.className = "member-btn"; 
-                btn.style.margin = "0"; // Bỏ margin thừa để gap của lưới tự căn đều
+                btn.style.margin = "0"; 
                 btn.textContent = m.nickname || m.fullname; 
                 btn.onclick = () => showFamilyModal(m);
                 container.appendChild(btn);
             });
         }
-/*
-        function renderFamilyGrid(members) {
-            const container = document.getElementById("family-buttons-container");
-            if (!container) return; container.innerHTML = "";
-            members.forEach(m => {
-                let btn = document.createElement("button"); btn.className = "member-btn"; btn.style.margin = "5px";
-                btn.textContent = m.nickname || m.fullname; btn.onclick = () => showFamilyModal(m);
-                container.appendChild(btn);
-            });
-        }*/ // end function renderFamilyGrid
         
         function showFamilyModal(m) {
             const fields = [
@@ -1175,26 +1115,17 @@ input:checked + .slider:before {
             });
             document.getElementById("btn-copy-all").onclick = () => { navigator.clipboard.writeText(fullBlockText); alert("Đã copy toàn bộ thông tin lí lịch!"); };
             document.getElementById("familyModal").style.display = "flex";
-        } // end function showFamilyModal
-
+        }
         function closeModal() { document.getElementById("familyModal").style.display = "none"; }
-
-        // ==========================================================================
-        // CÁC HÀM THEME, MODE
-        // ==========================================================================
 
         function toggleDarkMode(enable) {
             document.documentElement.setAttribute('data-theme', enable ? 'dark' : 'light');
             localStorage.setItem('darkMode', enable ? 'true' : 'false');
             const colorInput = document.getElementById("setting-color");
-            if (colorInput) { 
-                const slider = document.querySelector('.slider'); 
-                if (slider) slider.style.backgroundColor = enable ? colorInput.value : '#ccc'; 
-            }
-        } // end function toggleDarkMode
+            if (colorInput) { const slider = document.querySelector('.slider'); if (slider) slider.style.backgroundColor = enable ? colorInput.value : '#ccc'; }
+        }
 
         function applyTheme() {
-            // Mặc định chọn màu Xanh Bơ (#8BC34A) nếu chưa có màu nào được chọn hoặc lưu trữ
             const themeColor = document.getElementById("setting-color")?.value || "#8BC34A";
             const root = document.documentElement;
             root.style.setProperty('--theme-color', themeColor.toLowerCase());
@@ -1203,27 +1134,21 @@ input:checked + .slider:before {
             let r = parseInt(themeColor.slice(1,3),16), g = parseInt(themeColor.slice(3,5),16), b = parseInt(themeColor.slice(5,7),16);
             root.style.setProperty('--text-on-theme', ((r*299 + g*587 + b*114)/1000) > 150 ? '#111111' : '#ffffff');
             localStorage.setItem('themeColor', themeColor);
-        } // end function applyTheme
+        }
 
         function loadTheme() {
-            // Nếu chưa từng thiết lập (null), mặc định ép buộc kích hoạt Dark Mode ('true')
             const savedDark = localStorage.getItem('darkMode');
             const isDark = savedDark !== null ? savedDark === 'true' : true; 
             
             document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
             if (document.getElementById('darkModeToggle')) document.getElementById('darkModeToggle').checked = isDark;
             
-            // Nếu chưa từng chọn màu, mặc định hiển thị Xanh Bơ (#8BC34A) trên thẻ select và cấu hình hệ thống
             let savedColor = localStorage.getItem('themeColor') || "#8BC34A";
             if(document.getElementById("setting-color")) {
                 document.getElementById("setting-color").value = savedColor;
             }
             applyTheme();
-        } // end function loadTheme
-
-        // ==========================================================================
-        // CÁC HÀM SYNC DATA VÀ RESET APP
-        // ==========================================================================
+        }
 
         function syncAllDataFromSheet() {
             if (!navigator.onLine) { alert("Thiết bị đang ngoại tuyến!"); return; }
@@ -1309,7 +1234,7 @@ input:checked + .slider:before {
                     proceedToDownload();
                 }
             });
-        } // end function syncAllDataFromSheet
+        }
 
         function resetAppCompletely() {
             if (!confirm("⚠️ Bạn có chắc chắn muốn xóa toàn bộ lịch sử thiết bị không?\nHành động này không thể hoàn tác!")) return;
@@ -1357,7 +1282,7 @@ input:checked + .slider:before {
             };
             
             securePrompt();
-        } // end function resetAppCompletely
+        }
 
         window.onscroll = function() {
             const btn = document.getElementById("scrollTopBtn");
@@ -1378,7 +1303,7 @@ input:checked + .slider:before {
                 initFormOptions(); 
                 renderChartsAndStats();
             };
-        } // end function loadInitialSettings
+        }
 
         window.onload = function() { initDB(); };
     </script>
