@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
 /* ==========================================================================
-   1. KHAI BÁO BIẾN TOÀN CỤC (CSS VARIABLES)
+   1. KHAI BÁO BIẾN TOÀN CỤC (CSS VARIABLES - LIGHT MODE VÀ MẶC ĐỊNH)
    ========================================================================== */
 :root {
     --theme-color: #e91e63;
@@ -40,11 +40,11 @@
 }
 
 /* ==========================================================================
-   2. DARK MODE - GHI ĐÈ CÁC BIẾN
+   2. DARK MODE - GHI ĐÈ CHUẨN XÁC CÁC BIẾN MÀU
    ========================================================================== */
 [data-theme="dark"] {
     --primary-bg: #121212;
-    --secondary-bg: #1e1e1e;
+    --secondary-bg: #121212;
     --text-color: #e0e0e0;
     --border-color: #333333;
     --card-bg: #1e1e1e;
@@ -75,7 +75,7 @@ body {
     margin: 0; padding: 0;
     background-color: var(--secondary-bg);
     color: var(--text-color);
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
     padding-bottom: 80px;
 }
 
@@ -180,6 +180,7 @@ input:checked + .slider:before { transform: translateX(22px); }
 
     <div class="header" id="app-title">💰 TIỀN CỦA TÔI 💰</div>
 
+    <!-- TAB CHI -->
     <div id="tab-chi" class="tab-content active">
         <div class="card">
             <h3>Nhập Khoản Chi</h3>
@@ -232,6 +233,7 @@ input:checked + .slider:before { transform: translateX(22px); }
         </div>
     </div>
 
+    <!-- TAB THU -->
     <div id="tab-thu" class="tab-content">
         <div class="card">
             <h3>Nhập Khoản Thu</h3>
@@ -265,6 +267,7 @@ input:checked + .slider:before { transform: translateX(22px); }
         </div>
     </div>
 
+    <!-- TAB THỐNG KÊ -->
     <div id="tab-thongke" class="tab-content">
         <div class="card">
             <h3>Section 1: Cảnh Báo Vượt Hạn Mức (So với tháng trước)</h3>
@@ -308,6 +311,7 @@ input:checked + .slider:before { transform: translateX(22px); }
         </div>
     </div>
 
+    <!-- TAB FAMILY -->
     <div id="tab-family" class="tab-content">
         <div id="family-auth-view" class="card" style="text-align: center; padding: 40px 20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
@@ -327,6 +331,7 @@ input:checked + .slider:before { transform: translateX(22px); }
         </div>
     </div>
 
+    <!-- FAMILY DETAIL MODAL -->
     <div id="familyModal" class="modal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -336,6 +341,7 @@ input:checked + .slider:before { transform: translateX(22px); }
         </div>
     </div>
 
+    <!-- TAB SETTINGS -->
     <div id="tab-settings" class="tab-content">
         <div class="card">
             <h3>Thay Đổi Giao Diện</h3>
@@ -406,6 +412,7 @@ input:checked + .slider:before { transform: translateX(22px); }
         </div>
     </div>
 
+    <!-- BOTTOM NAVBAR -->
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('chi')">Chi</button>
         <button class="tab-btn" onclick="switchTab('thu')">Thu</button>
@@ -422,7 +429,6 @@ input:checked + .slider:before { transform: translateX(22px); }
             apiEndpoint: 'https://script.google.com/macros/s/AKfycbzsrG_EpTW2FgX9FQ0opVVQKBKImKbHXwXg1-eeLxD8Up35AYWIWWRu2V2tNLVTWNSw/exec' 
         };
 
-        // HARDCODE DANH MỤC CỐ ĐỊNH CHUẨN XÁC TUYỆT ĐỐI - KHÔNG SỢ BỊ XÓA HAY LỖI MẠNG
         const CATEGORIES = {
             thu: {
                 "Lương": ["Lương tháng", "Bổ sung lương", "Ứng lương", "Trực lễ tết", "Công tác phí", "Hoàn thuế"],
@@ -650,7 +656,6 @@ input:checked + .slider:before { transform: translateX(22px); }
                 const now = new Date(), cM = now.getMonth(), cY = now.getFullYear();
                 let pM = cM - 1, pY = cY; if (pM < 0) { pM = 11; pY--; }
 
-                // Tạo danh sách lịch sử 20 bản ghi
                 let sortedData = [...data].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                 let expList = sortedData.filter(t => t.amount < 0).slice(0, 20);
                 let incList = sortedData.filter(t => t.amount > 0).slice(0, 20);
@@ -836,7 +841,7 @@ input:checked + .slider:before { transform: translateX(22px); }
         function closeModal() { document.getElementById("familyModal").style.display = "none"; }
 
         function toggleDarkMode(enable) {
-            document.documentElement.toggleAttribute('data-theme', enable);
+            document.documentElement.setAttribute('data-theme', enable ? 'dark' : 'light');
             localStorage.setItem('darkMode', enable ? 'true' : 'false');
             const colorInput = document.getElementById("setting-color");
             if (colorInput) { const slider = document.querySelector('.slider'); if (slider) slider.style.backgroundColor = enable ? colorInput.value : '#ccc'; }
@@ -854,10 +859,10 @@ input:checked + .slider:before { transform: translateX(22px); }
         }
 
         function loadTheme() {
-            if (localStorage.getItem('darkMode') === 'true') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                if (document.getElementById('darkModeToggle')) document.getElementById('darkModeToggle').checked = true;
-            }
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            if (document.getElementById('darkModeToggle')) document.getElementById('darkModeToggle').checked = isDark;
+            
             let savedColor = localStorage.getItem('themeColor');
             if (savedColor) { if(document.getElementById("setting-color")) document.getElementById("setting-color").value = savedColor; applyTheme(); }
         }
@@ -898,7 +903,6 @@ input:checked + .slider:before { transform: translateX(22px); }
             };
         }
 
-        // ĐỒNG BỘ CHỈ TẢI DATA GIA ĐÌNH - KHÔNG ĐỘNG CHẠM GÌ ĐẾN BIẾN CATEGORIES NỮA
         function syncAllDataFromSheet() {
             if (!navigator.onLine) { alert("Thiết bị đang ngoại tuyến!"); return; }
             const syncBtn = document.getElementById("btn-sync-data"); const originalText = syncBtn.innerHTML;
@@ -956,7 +960,7 @@ input:checked + .slider:before { transform: translateX(22px); }
                 if (lastSync && document.getElementById("sync-status")) document.getElementById("sync-status").innerHTML = `Last sync: ${lastSync.value}`;
 
                 loadTheme();
-                initFormOptions(); // Gọi render danh mục từ biến hardcode ngay
+                initFormOptions(); 
                 updateRecurringCategories();
                 renderRulesList();
                 renderChartsAndStats();
