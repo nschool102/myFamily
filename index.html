@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PWA Quản Lý Thu Chi</title>
+    <title>TIỀN CỦA TÔI</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
 /* ==========================================================================
    1. KHAI BÁO BIẾN TOÀN CỤC (CSS VARIABLES)
@@ -543,7 +544,7 @@ input:checked + .slider:before {
 </head>
 <body>
 
-    <div class="header" id="app-title">Quản Lý Thu Chi</div>
+    <div class="header" id="app-title">💰 TIỀN CỦA TÔI 💰</div>
 
     <div id="tab-chi" class="tab-content active">
         <div class="card">
@@ -591,6 +592,10 @@ input:checked + .slider:before {
             </div>
             <div id="top-expenses-list"></div>
         </div>
+        <div class="card" style="margin-top: 15px;">
+            <h3>Lịch sử Khoản Chi (20 giao dịch gần nhất)</h3>
+            <div id="expense-history-container">Đang tải lịch sử chi...</div>
+        </div>
     </div>
 
     <div id="tab-thu" class="tab-content">
@@ -620,6 +625,10 @@ input:checked + .slider:before {
                 <button type="submit" class="btn">Ghi Khoản Thu</button>
             </form>
         </div>
+        <div class="card" style="margin-top: 15px;">
+            <h3>Lịch sử Khoản Thu (20 giao dịch gần nhất)</h3>
+            <div id="income-history-container">Đang tải lịch sử thu...</div>
+        </div>
     </div>
 
     <div id="tab-thongke" class="tab-content">
@@ -641,7 +650,7 @@ input:checked + .slider:before {
         <div class="card">
             <h3>Section 3: Tỷ Lệ Nguồn Thu</h3>
             <div class="stat-row"><span>A (CON CỢP):</span><strong id="sec3-a">0</strong></div>
-            <div class="stat-row"><span>B (Lương, Thưởng):</span><strong id="sec3-b">0</strong></div>
+            <div class="stat-row"><span>B (MÌNH):</span><strong id="sec3-b">0</strong></div>
             <div class="chart-container">
                 <canvas id="chart-sec3-pie"></canvas>
             </div>
@@ -710,6 +719,16 @@ input:checked + .slider:before {
                     <option value="#FFEB3B">Vàng</option>
                 </select>
             </div>
+        </div>
+
+        <div class="card" style="margin-top: 15px;">
+            <h3>Dữ liệu & Đồng bộ</h3>
+            <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">
+                Cập nhật lại danh mục thu chi và thông tin thành viên mới nhất từ Google Sheet.
+            </p>
+            <button class="btn" id="btn-sync-data" onclick="syncAllDataFromSheet()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                🔄 Đồng bộ dữ liệu ngay
+            </button>
         </div>
 
         <div class="card">
@@ -1067,7 +1086,7 @@ input:checked + .slider:before {
                 // Section 3 render
                 document.getElementById("sec3-a").textContent = formatVND(sumA_Tiger);
                 document.getElementById("sec3-b").textContent = formatVND(sumB_Salary);
-                renderPieChart('chart-sec3-pie', ['A (CON CỢP)', 'B (Lương, Thưởng)'], [sumA_Tiger, sumB_Salary]);
+                renderPieChart('chart-sec3-pie', ['A (CON CỢP)', 'B (MÌNH)'], [sumA_Tiger, sumB_Salary]);
 
                 // Section 4 render
                 renderSection4(data);
@@ -1079,7 +1098,9 @@ input:checked + .slider:before {
             const canvasEl = document.getElementById(canvasId);
             if (!canvasEl) return;
             const ctx = canvasEl.getContext('2d');
-            let total = dataset.reduce((a, b) => a + b, 0);
+            
+            // Tính tổng bằng cách lấy trị tuyệt đối đề phòng số âm ở phần chi
+            let total = dataset.reduce((a, b) => a + Math.abs(b), 0);
             
             charts[canvasId] = new Chart(ctx, {
                 type: 'pie',
@@ -1090,16 +1111,35 @@ input:checked + .slider:before {
                         backgroundColor: ['#4CAF50', '#F44336', '#FF9800', '#2196F3', '#9C27B0', '#E91E63']
                     }]
                 },
+                plugins: [ChartDataLabels], // KÍCH HOẠT PLUGIN ĐỔ CHỮ LÊN MIẾNG BÁNH
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        // --- CẤU HÌNH HIỂN THỊ % TRỰC TIẾP TRÊN BIỂU ĐỒ ---
+                        datalabels: {
+                            color: '#ffffff', // Màu chữ phần trăm hiển thị trên biểu đồ
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            // Định vị chữ nằm ở giữa hoặc hơi lệch ra rìa tùy ý ('center', 'start', 'end')
+                            anchor: 'center', 
+                            align: 'center',
+                            formatter: function(value, context) {
+                                if (total === 0) return '';
+                                let pct = (Math.abs(value) / total * 100).toFixed(1) + "%";
+                                // Chỉ hiển thị nếu phần trăm lớn hơn 3% để tránh bị đè chữ khi miếng bánh quá nhỏ
+                                return (Math.abs(value) / total * 100) > 3 ? pct : '';
+                            }
+                        },
+                        // --- CẤU HÌNH KHI DI CHUỘT VÀO (TOOLTIP) ---
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     let val = context.raw;
-                                    let pct = total > 0 ? (val / total * 100).toFixed(1) + "%" : "0%";
-                                    return context.label + ": " + val.toLocaleString() + " (" + pct + ")";
+                                    let pct = total > 0 ? (Math.abs(val) / total * 100).toFixed(1) + "%" : "0%";
+                                    return context.label + ": " + Math.abs(val).toLocaleString() + " (" + pct + ")";
                                 }
                             }
                         }
@@ -1616,6 +1656,174 @@ input:checked + .slider:before {
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(loadFamilyDataFromSheet, 1000);
         });
+
+        // HIỂN THỊ LỊCH SỬ GIAO DỊCH (Nếu số tiền < 0: Hiển thị dấu trừ, màu đỏ (Chi). Nếu số tiền > 0: Hiển thị dấu cộng, màu xanh (Thu) và tự động làm tròn số tiền theo định dạng tiền tệ VNĐ gọn gàng.)
+        function loadTransactionHistory() {
+            if (!CONFIG.apiEndpoint) return;
+            
+            const incomeContainer = document.getElementById("income-history-container");
+            const expenseContainer = document.getElementById("expense-history-container");
+            
+            if (!incomeContainer && !expenseContainer) return;
+            
+            fetch(`${CONFIG.apiEndpoint}?action=getTransactions`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === "success" && res.data.length > 0) {
+                        // Xóa dữ liệu cũ của cả 2 tab trước khi nạp mới
+                        if (incomeContainer) incomeContainer.innerHTML = "";
+                        if (expenseContainer) expenseContainer.innerHTML = "";
+                        
+                        let hasIncome = false;
+                        let hasExpense = false;
+
+                        res.data.forEach(item => {
+                            const isExpense = item.amount < 0;
+                            const amountColor = isExpense ? "#FF5252" : "#4CAF50"; 
+                            const prefix = isExpense ? "" : "+"; 
+                            
+                            // Định dạng số tiền VNĐ mẫu: 4.934.842 ₫
+                            const formattedAmount = new Intl.NumberFormat('vi-VN', { 
+                                style: 'currency', 
+                                currency: 'VND' 
+                            }).format(item.amount);
+
+                            // Tạo layout cho từng dòng lịch sử
+                            const row = document.createElement("div");
+                            row.style.display = "flex";
+                            row.style.justifyContent = "space-between";
+                            row.style.padding = "10px 4px";
+                            row.style.borderBottom = "1px solid #333";
+                            row.style.fontSize = "13px";
+                            row.style.alignItems = "center";
+                            row.innerHTML = `
+                                <div style="flex: 1; padding-right: 10px;">
+                                    <strong style="color: var(--theme-color); font-size: 14px;">${item.subtype || item.type}</strong>
+                                    <span style="color: #888; font-size: 11px; margin-left: 5px;">${item.type}</span>
+                                    <br>
+                                    <small style="color: #666; font-size: 11px;">${item.date}</small>
+                                    ${item.note ? `<br><small style="color: #aaa; font-style: italic;">👉 ${item.note}</small>` : ''}
+                                </div>
+                                <div style="color: ${amountColor}; font-weight: bold; font-size: 14px; text-align: right; white-space: nowrap;">
+                                    ${prefix}${formattedAmount}
+                                </div>
+                            `;
+
+                            // Lọc và phân phối về đúng Tab
+                            if (isExpense) {
+                                if (expenseContainer) {
+                                    expenseContainer.appendChild(row);
+                                    hasExpense = true;
+                                }
+                            } else {
+                                if (incomeContainer) {
+                                    incomeContainer.appendChild(row);
+                                    hasIncome = true;
+                                }
+                            }
+                        });
+
+                        // Nếu tab nào trống thì hiển thị dòng thông báo rỗng
+                        if (!hasIncome && incomeContainer) {
+                            incomeContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có khoản thu nào.</p>";
+                        }
+                        if (!hasExpense && expenseContainer) {
+                            expenseContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có khoản chi nào.</p>";
+                        }
+
+                    } else {
+                        if (incomeContainer) incomeContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có dữ liệu.</p>";
+                        if (expenseContainer) expenseContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có dữ liệu.</p>";
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi nạp lịch sử:", err);
+                    if (incomeContainer) incomeContainer.innerHTML = "<p style='color: #FF5252; text-align: center; font-size: 12px;'>Lỗi kết nối.</p>";
+                    if (expenseContainer) expenseContainer.innerHTML = "<p style='color: #FF5252; text-align: center; font-size: 12px;'>Lỗi kết nối.</p>";
+                });
+        }
+
+        // ĐỒNG BỘ DANH MỤC VÀ FAMILY GIỮA MÁY VÀ SERVER
+        function syncAllDataFromSheet() {
+            // 1. Kiểm tra trạng thái mạng trước khi đồng bộ
+            if (!navigator.onLine) {
+                alert("Thiết bị đang ngoại tuyến. Vui lòng kết nối internet để đồng bộ!");
+                return;
+            }
+            
+            if (!CONFIG.apiEndpoint) {
+                alert("Chưa cấu hình API URL (apiEndpoint) trong cài đặt!");
+                return;
+            }
+
+            const syncBtn = document.getElementById("btn-sync-data");
+            const originalText = syncBtn.innerHTML;
+            
+            // Đổi trạng thái nút bấm để báo hiệu đang chạy
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = "⏳ Đang đồng bộ...";
+            syncBtn.style.opacity = "0.7";
+
+            // 2. Chạy song song 2 luồng tải danh mục và tải thông tin gia đình
+            const syncCategories = fetch(`${CONFIG.apiEndpoint}?action=getCategories`).then(res => res.json());
+            const syncFamily = fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`).then(res => res.json());
+
+            Promise.all([syncCategories, syncFamily])
+            .then(([catRes, famRes]) => {
+                let successMessage = "";
+
+                // Xử lý nạp danh mục thu chi
+                if (catRes.status === "success") {
+                    // Lưu dữ liệu danh mục mới vào biến cục bộ của app (ví dụ: localCategories)
+                    // Thay thế tên biến 'localCategories' bằng tên biến danh mục thực tế trong code của bạn nếu có
+                    if (typeof localCategories !== 'undefined') {
+                        localCategories = catRes.data;
+                    }
+                    
+                    // Lưu vào IndexedDB/LocalStorage nếu ứng dụng của bạn có dùng
+                    if (db) {
+                        const tx = db.transaction("settings", "readwrite");
+                        tx.objectStore("settings").put({ key: "categories", value: catRes.data });
+                    }
+
+                    // Gọi lại hàm cập nhật ô chọn (select options) trên giao diện thu chi của bạn
+                    if (typeof updateCategoryDropdowns === 'function') {
+                        updateCategoryDropdowns(catRes.data);
+                    } else if (typeof loadCategories === 'function') {
+                        loadCategories(); // Hoặc hàm nạp danh mục cũ của bạn
+                    }
+                    successMessage += "✅ Đã cập nhật Danh mục mới.\n";
+                }
+
+                // Xử lý nạp thông tin gia đình
+                if (famRes.status === "success") {
+                    localFamilyData = famRes.data;
+                    
+                    // Vẽ lại các nút bấm thành viên ở tab Family
+                    if (typeof renderFamilyButtons === 'function') {
+                        renderFamilyButtons();
+                    }
+                    successMessage += "✅ Đã cập nhật Thông tin gia đình.";
+                }
+
+                // Thông báo thành công cho người dùng
+                if (successMessage) {
+                    alert(successMessage);
+                } else {
+                    alert("Đồng bộ hoàn thành nhưng không có dữ liệu nào thay đổi.");
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi đồng bộ tổng thể:", err);
+                alert("Đồng bộ thất bại! Vui lòng kiểm tra lại mạng hoặc URL Apps Script.");
+            })
+            .finally(() => {
+                // Trả lại trạng thái nút bấm ban đầu
+                syncBtn.disabled = false;
+                syncBtn.innerHTML = originalText;
+                syncBtn.style.opacity = "1";
+            });
+        }
 
         // Xử lý nút cuộn nhanh lên đầu trang (Scroll To Top)
         window.onscroll = function() {
