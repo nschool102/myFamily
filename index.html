@@ -478,24 +478,24 @@ input:checked + .slider:before {
 /* ==========================================================================
    18. FAMILY MODAL DARK MODE FIX
    ========================================================================== */
-#family-modal .modal-content {
+#familyModal .modal-content {
     background: var(--modal-content-bg);
     color: var(--modal-text);
 }
 
-#family-modal .modal-content h3 {
+#familyModal .modal-content h3 {
     color: var(--theme-color);
 }
 
-#family-modal .modal-content .stat-row {
+#familyModal .modal-content .stat-row {
     color: var(--modal-text);
 }
 
-#family-modal .modal-content .stat-row:hover {
+#familyModal .modal-content .stat-row:hover {
     background: var(--secondary-bg);
 }
 
-#family-modal .modal-content .btn {
+#familyModal .modal-content .btn {
     background-color: var(--theme-color) !important;
     color: var(--text-on-theme) !important;
 }
@@ -671,36 +671,43 @@ input:checked + .slider:before {
         </div>
     </div>
 
-    <!-- TAB FAMILY -->
     <div id="tab-family" class="tab-content">
-    
-    <div id="family-auth-view" class="card" style="text-align: center; padding: 40px 20px;">
-        <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
-        <h3>Nội dung này được bảo mật</h3>
-        <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">
-            Nhập mật khẩu để xem thông tin gia đình.
-        </p>
-        <div style="margin-bottom: 15px;">
-            <input type="password" id="family-password" placeholder="Nhập mật khẩu..." 
-                   style="padding: 10px; width: 80%; max-width: 250px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; text-align: center;">
+        <div id="family-auth-view" class="card" style="text-align: center; padding: 40px 20px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
+            <h3>Nội dung này được bảo mật</h3>
+            <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">
+                Nhập mật khẩu để xem thông tin gia đình.
+            </p>
+            <div style="margin-bottom: 15px;">
+                <input type="password" id="family-password" placeholder="Nhập mật khẩu..." 
+                       style="padding: 10px; width: 80%; max-width: 250px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; text-align: center;">
+            </div>
+            <button class="btn" onclick="verifyFamilyAuth()" style="width: 100%; max-width: 250px; margin: 0 auto;">
+                🔑 Xác thực truy cập
+            </button>
         </div>
-        <button class="btn" onclick="verifyFamilyAuth()" style="width: 100%; max-width: 250px; margin: 0 auto;">
-            🔑 Xác thực truy cập
-        </button>
-    </div>
 
-    <div id="family-main-view" style="display: none;">
-        <div class="card">
-            <h3>Thành viên gia đình</h3>
-            <div id="family-buttons-container"></div>
+        <div id="family-main-view" style="display: none;">
+            <div class="card">
+                <h3>Thành viên gia đình</h3>
+                <div id="family-buttons-container" class="family-grid"></div>
+            </div>
         </div>
-    </div>
 
-</div> <!-- end TAB FAMILY -->
-
-
-    <!-- TAB SETTINGS -->
-    <div id="tab-settings" class="tab-content">
+        <div id="familyModal" class="modal">
+            <div class="modal-content">
+                <button class="modal-close" onclick="closeFamilyModal()">&times;</button>
+                <h3 style="margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-size: 1.2rem;">📋 Chi tiết lý lịch</h3>
+                
+                <div id="modal-member-details" style="margin: 15px 0; max-height: 50vh; overflow-y: auto;"></div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button id="btn-copy-all" class="btn" style="flex: 1; padding: 12px;">📋 Copy Tất Cả</button>
+                    <button class="btn" onclick="closeFamilyModal()" style="flex: 1; background-color: var(--danger-color) !important; padding: 12px;">❌ Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div> <div id="tab-settings" class="tab-content">
         <div class="card">
             <h3>Thay Đổi Giao Diện</h3>
             <div class="theme-switch-wrapper">
@@ -772,9 +779,7 @@ input:checked + .slider:before {
             </form>
             <div id="recurring-rules-list" style="margin-top:15px;"></div>
         </div>
-    </div> <!-- end TAB SETTINGS -->
-
-    <div class="nav-tabs">
+    </div> <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('chi')">Chi</button>
         <button class="tab-btn" onclick="switchTab('thu')">Thu</button>
         <button class="tab-btn" onclick="switchTab('thongke')">Thống Kê</button>
@@ -935,7 +940,6 @@ input:checked + .slider:before {
                 renderChartsAndStats();
             }
             
-            // ĐÃ SỬA: Đổi từ tabId sang tabName cho đồng bộ với tham số đầu hàm
             if (tabName === 'family') {
                 checkFamilyTabAccess();
             }
@@ -985,17 +989,15 @@ input:checked + .slider:before {
         let isSyncing = false; // Biến khóa chặn trùng lặp tiến trình song song
 
         function syncToGoogleSheets() {
-            // 1. Kiểm tra điều kiện: Có mạng? Đang chạy đồng bộ sẵn không? Link API đã cấu hình chưa?
             if (!navigator.onLine || isSyncing || !CONFIG.apiEndpoint) {
                 return;
             }
             
             getAllTransactions(transactions => {
-                // 2. Chỉ lọc ra các khoản chưa đồng bộ (synced === 0)
                 const unsynced = transactions.filter(t => t.synced === 0);
                 if (unsynced.length === 0) return;
 
-                isSyncing = true; // Khóa tiến trình lại
+                isSyncing = true; 
                 console.log(`Phát hiện ${unsynced.length} khoản offline. Đang tự động đẩy lên Sheet...`);
 
                 fetch(CONFIG.apiEndpoint, {
@@ -1006,7 +1008,6 @@ input:checked + .slider:before {
                 .then(res => res.json())
                 .then(resData => {
                     if (resData.status === "success") {
-                        // 3. Cập nhật trạng thái synced = 1 ngay lập tức trong bộ nhớ máy để không bao giờ gửi lại nữa
                         const tx = db.transaction("transactions", "readwrite");
                         const store = tx.objectStore("transactions");
                         unsynced.forEach(t => {
@@ -1015,13 +1016,13 @@ input:checked + .slider:before {
                         });
                         
                         console.log("Đồng bộ ngầm thành công!");
-                        renderChartsAndStats(); // Cập nhật lại biểu đồ hiển thị
+                        renderChartsAndStats(); 
                     }
-                    isSyncing = false; // Mở khóa tiến trình
+                    isSyncing = false; 
                 })
                 .catch(err => {
                     console.log("Lỗi kết nối, dữ liệu vẫn an toàn offline: ", err);
-                    isSyncing = false; // Giải phóng khóa để thử lại lần sau
+                    isSyncing = false; 
                 });
             });
         }
@@ -1053,7 +1054,6 @@ input:checked + .slider:before {
                         if (t.type === "Lương" || t.type === "Thưởng") sum_Mine += amt;
                     }
 
-                    // Xử lý Section 1: Thuật toán so sánh tháng hiện tại và tháng trước
                     let absAmt = Math.abs(amt);
                     if (amt < 0) {
                         if (tDate.getFullYear() === cY && tDate.getMonth() === cM) {
@@ -1072,34 +1072,31 @@ input:checked + .slider:before {
                     }
                 });
 
-                // Render Chart Tab Chi
                 renderPieChart('chart-chi-overview', ['Tổng Thu', 'Tổng Chi'], [totalThu, totalChi]);
                 renderTopExpenses();
 
-                // Section 1 Alerts render
                 const alertDiv = document.getElementById("section1-alerts");
-                alertDiv.innerHTML = "";
-                Object.keys(catCurrentMonth).forEach(cat => {
-                    let cur = catCurrentMonth[cat]; let prev = catPrevMonth[cat];
-                    if (prev > 0 && cur > prev) {
-                        let pct = ((cur - prev) / prev * 100).toFixed(1);
-                        alertDiv.innerHTML += `<div class="alert-box">Hạng mục <strong>${cat}</strong> tháng này Chi vượt <strong>${pct}%</strong> so với tháng trước!</div>`;
-                    }
-                });
-                if(alertDiv.innerHTML === "") alertDiv.innerHTML = "<p style='color:green;'>An toàn! Không có hạng mục nào chi vượt tháng trước.</p>";
+                if (alertDiv) {
+                    alertDiv.innerHTML = "";
+                    Object.keys(catCurrentMonth).forEach(cat => {
+                        let cur = catCurrentMonth[cat]; let prev = catPrevMonth[cat];
+                        if (prev > 0 && cur > prev) {
+                            let pct = ((cur - prev) / prev * 100).toFixed(1);
+                            alertDiv.innerHTML += `<div class="alert-box">Hạng mục <strong>${cat}</strong> tháng này Chi vượt <strong>${pct}%</strong> so với tháng trước!</div>`;
+                        }
+                    });
+                    if(alertDiv.innerHTML === "") alertDiv.innerHTML = "<p style='color:green;'>An toàn! Không có hạng mục nào chi vượt tháng trước.</p>";
+                }
 
-                // Section 2 render
-                document.getElementById("sec2-thu").textContent = formatVND(totalThu);
-                document.getElementById("sec2-chi").textContent = formatVND(totalChi);
-                document.getElementById("sec2-remain").textContent = formatVND(totalThu - totalChi);
+                if (document.getElementById("sec2-thu")) document.getElementById("sec2-thu").textContent = formatVND(totalThu);
+                if (document.getElementById("sec2-chi")) document.getElementById("sec2-chi").textContent = formatVND(totalChi);
+                if (document.getElementById("sec2-remain")) document.getElementById("sec2-remain").textContent = formatVND(totalThu - totalChi);
                 renderPieChart('chart-sec2-pie', ['Tổng Thu', 'Tổng Chi'], [totalThu, totalChi]);
 
-                // Section 3 render
-                document.getElementById("sec3-Tiger").textContent = formatVND(sum_Tiger);
-                document.getElementById("sec3-Mine").textContent = formatVND(sum_Mine);
+                if (document.getElementById("sec3-Tiger")) document.getElementById("sec3-Tiger").textContent = formatVND(sum_Tiger);
+                if (document.getElementById("sec3-Mine")) document.getElementById("sec3-Mine").textContent = formatVND(sum_Mine);
                 renderPieChart('chart-sec3-pie', ['A (MÌNH)', 'B (CON CỢP)'], [sum_Mine, sum_Tiger]);
 
-                // Section 4 render
                 renderSection4(data);
             });
         }
@@ -1110,7 +1107,6 @@ input:checked + .slider:before {
             if (!canvasEl) return;
             const ctx = canvasEl.getContext('2d');
             
-            // Tính tổng bằng cách lấy trị tuyệt đối đề phòng số âm ở phần chi
             let total = dataset.reduce((a, b) => a + Math.abs(b), 0);
             
             charts[canvasId] = new Chart(ctx, {
@@ -1122,29 +1118,25 @@ input:checked + .slider:before {
                         backgroundColor: ['#4CAF50', '#F44336', '#FF9800', '#2196F3', '#9C27B0', '#E91E63']
                     }]
                 },
-                plugins: [ChartDataLabels], // KÍCH HOẠT PLUGIN ĐỔ CHỮ LÊN MIẾNG BÁNH
+                plugins: [ChartDataLabels], 
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        // --- CẤU HÌNH HIỂN THỊ % TRỰC TIẾP TRÊN BIỂU ĐỒ ---
                         datalabels: {
-                            color: '#ffffff', // Màu chữ phần trăm hiển thị trên biểu đồ
+                            color: '#ffffff', 
                             font: {
                                 weight: 'bold',
                                 size: 12
                             },
-                            // Định vị chữ nằm ở giữa hoặc hơi lệch ra rìa tùy ý ('center', 'start', 'end')
                             anchor: 'center', 
                             align: 'center',
                             formatter: function(value, context) {
                                 if (total === 0) return '';
                                 let pct = (Math.abs(value) / total * 100).toFixed(1) + "%";
-                                // Chỉ hiển thị nếu phần trăm lớn hơn 3% để tránh bị đè chữ khi miếng bánh quá nhỏ
                                 return (Math.abs(value) / total * 100) > 3 ? pct : '';
                             }
                         },
-                        // --- CẤU HÌNH KHI DI CHUỘT VÀO (TOOLTIP) ---
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -1160,7 +1152,9 @@ input:checked + .slider:before {
         }
 
         function renderTopExpenses() {
-            const period = document.getElementById("chi-top-period").value;
+            const periodSelect = document.getElementById("chi-top-period");
+            if (!periodSelect) return;
+            const period = periodSelect.value;
             getAllTransactions(data => {
                 const now = new Date();
                 let filtered = data.filter(t => t.amount < 0);
@@ -1177,10 +1171,11 @@ input:checked + .slider:before {
                     return true;
                 });
 
-                filtered.sort((a, b) => a.amount - b.amount); // Giá trị âm nhỏ nhất tương ứng chi nhiều nhất
+                filtered.sort((a, b) => a.amount - b.amount); 
                 const top5 = filtered.slice(0, 5);
 
                 const container = document.getElementById("top-expenses-list");
+                if (!container) return;
                 container.innerHTML = "";
                 if(top5.length === 0) container.innerHTML = "<p>Không có dữ liệu chi tiêu.</p>";
                 top5.forEach((t, index) => {
@@ -1190,7 +1185,9 @@ input:checked + .slider:before {
         }
 
         function renderSection4(allData) {
-            const period = document.getElementById("sec4-period").value;
+            const periodSelect = document.getElementById("sec4-period");
+            if (!periodSelect) return;
+            const period = periodSelect.value;
             const run = (data) => {
                 const now = new Date();
                 let currentBalance = 0;
@@ -1198,7 +1195,7 @@ input:checked + .slider:before {
 
                 data.forEach(t => {
                     let d = new Date(t.timestamp);
-                    currentBalance += t.amount; // Lũy kế số dư thực tế tổng thể
+                    currentBalance += t.amount; 
 
                     let isMatch = (period === 'month') ? 
                         (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) : 
@@ -1214,54 +1211,16 @@ input:checked + .slider:before {
                     }
                 });
 
-                document.getElementById("sec4-balance").textContent = formatVND(currentBalance);
-                document.getElementById("sec4-thu").textContent = formatVND(totalThu);
-                document.getElementById("sec4-net-chi").textContent = formatVND(rawChi);
-                document.getElementById("sec4-savings").textContent = formatVND(investmentSavings);
+                if (document.getElementById("sec4-balance")) document.getElementById("sec4-balance").textContent = formatVND(currentBalance);
+                if (document.getElementById("sec4-thu")) document.getElementById("sec4-thu").textContent = formatVND(totalThu);
+                if (document.getElementById("sec4-net-chi")) document.getElementById("sec4-net-chi").textContent = formatVND(rawChi);
+                if (document.getElementById("sec4-savings")) document.getElementById("sec4-savings").textContent = formatVND(investmentSavings);
             };
             if (allData) run(allData); else getAllTransactions(run);
         }
 
-        // Tab Family Security và xử lý Tự động sao chép clipboard
-        // Hàm thực hiện kiểm tra mật khẩu để mở khóa tab Family
-        function unlockFamilyTab() {
-            const userPassword = prompt("🔒 Nhập mật khẩu xác thực tab Family:");
-            
-            if (userPassword === null || userPassword.trim() === "") return;
-            if (!CONFIG.apiEndpoint) {
-                alert("Chưa cấu hình API URL!");
-                return;
-            }
-
-            // Gọi lên Sheet kiểm tra chéo mật khẩu ở ô E2 tab DANH MỤC
-            fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(userPassword.trim())}`)
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status === "success" && res.match === true) {
-                        // Nhập đúng -> Lưu trạng thái đã mở khóa vào bộ nhớ máy
-                        localStorage.setItem("family_unlocked", "true");
-                        
-                        // Hiển thị nội dung, ẩn màn hình khóa
-                        document.getElementById("family-lock-screen").style.display = "none";
-                        document.getElementById("family-content").style.display = "block";
-                        
-                        // Nếu bạn có hàm vẽ các nút thành viên thì gọi ở đây để nạp dữ liệu luôn
-                        if (typeof renderFamilyButtons === 'function') renderFamilyButtons();
-                        
-                    } else {
-                        alert("❌ Mật khẩu không chính xác! Không thể truy cập thông tin.");
-                    }
-                })
-                .catch(err => {
-                    console.error("Lỗi xác thực:", err);
-                    alert("Lỗi kết nối hệ thống xác thực.");
-                });
-        }
-
-        // Hàm kiểm tra trạng thái mở khóa mỗi khi người dùng bấm chuyển tab vào tab Family
-        // Bạn hãy tìm hàm điều hướng tab hiện tại của mình (ví dụ: switchTab('family')) và gọi hàm này vào.
+        // Tab Family Security và điều hướng truy cập
         function checkFamilyTabAccess() {
-            // Kiểm tra xem thiết bị này đã từng đăng nhập thành công trước đó chưa
             const isUnlocked = localStorage.getItem("family_unlocked") === "true";
             
             const authView = document.getElementById("family-auth-view");
@@ -1270,22 +1229,12 @@ input:checked + .slider:before {
             if (!authView || !mainView) return;
         
             if (isUnlocked) {
-                // NẾU ĐÃ MỞ KHÓA -> Hiện nội dung chính, ẩn khung nhập pass
                 authView.style.setProperty("display", "none", "important");
                 mainView.style.setProperty("display", "block", "important");
-                
-                // Gọi hàm nạp dữ liệu thành viên của bạn
-                if (typeof generateFamilyInterface === 'function') {
-                    generateFamilyInterface();
-                } else if (typeof renderFamilyButtons === 'function') {
-                    renderFamilyButtons();
-                }
+                loadFamilyDataFromSheet(); // Gọi lấy dữ liệu thực tế ngay khi mở
             } else {
-                // NẾU CHƯA MỞ KHÓA -> Hiện khung nhập pass, ẩn nội dung chính
                 authView.style.setProperty("display", "block", "important");
                 mainView.style.setProperty("display", "none", "important");
-                
-                // Xóa sạch ô nhập pass cũ cho sạch sẽ
                 const passInput = document.getElementById("family-password");
                 if (passInput) passInput.value = "";
             }
@@ -1307,25 +1256,9 @@ input:checked + .slider:before {
             fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(inputPass.trim())}`)
                 .then(res => res.json())
                 .then(res => {
-                    console.log("Kết quả từ Google Sheet:", res);
                     if (res.status === "success" && res.match === true) {
                         localStorage.setItem("family_unlocked", "true");
-                        
-                        if (document.getElementById("family-auth-view")) {
-                            document.getElementById("family-auth-view").style.display = "none";
-                        } else if (document.getElementById("family-lock-screen")) {
-                            document.getElementById("family-lock-screen").style.display = "none";
-                        }
-                        
-                        if (document.getElementById("family-main-view")) {
-                            document.getElementById("family-main-view").style.display = "block";
-                        } else if (document.getElementById("family-content")) {
-                            document.getElementById("family-content").style.display = "block";
-                        }
-                        
-                        // Khởi động nạp dữ liệu thật luôn
-                        generateFamilyInterface();
-                        
+                        checkFamilyTabAccess();
                     } else {
                         alert("Mật khẩu không khớp!");
                     }
@@ -1336,53 +1269,54 @@ input:checked + .slider:before {
                 });
         }
         
-        function generateFamilyInterface() {
+        // 1. Tự động gọi API lấy dữ liệu thành viên từ Google Sheet
+        let localFamilyData = [];
+        function loadFamilyDataFromSheet() {
             const container = document.getElementById("family-buttons-container");
             if (!container) return;
             
-            container.innerHTML = "<p style='color: #aaa; text-align: center;'>🔄 Đang tải dữ liệu thành viên từ Google Sheet...</p>";
-        
+            container.innerHTML = "<p style='color: #aaa; text-align: center;'>🔄 Đang tải dữ liệu thành viên...</p>";
+
             if (!CONFIG.apiEndpoint) {
                 container.innerHTML = "<p style='color: #f44336;'>Chưa cấu hình API URL!</p>";
                 return;
             }
-        
+            
             fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`)
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status === "success" && res.data && res.data.length > 0) {
-                        // Chuyển giao mảng dữ liệu sang cho hàm render lưới button xử lý
-                        renderFamilyGrid(res.data);
-                    } else {
-                        container.innerHTML = "<p style='color: #aaa; text-align: center;'>📭 Chưa có dữ liệu thành viên nào trên tab FAMILY của Google Sheet.</p>";
-                    }
-                })
-                .catch(err => {
-                    console.error("Lỗi lấy dữ liệu Family:", err);
-                    container.innerHTML = "<p style='color: #f44336; text-align: center;'>❌ Lỗi kết nối không thể tải dữ liệu thành viên!</p>";
-                });
+            .then(res => res.json())
+            .then(resData => {
+                if (resData.status === "success" && resData.data && resData.data.length > 0) {
+                    localFamilyData = resData.data;
+                    renderFamilyButtons();
+                } else {
+                    container.innerHTML = "<p style='color: #aaa; text-align: center;'>📭 Chưa có dữ liệu trên tab FAMILY của Sheet.</p>";
+                }
+            })
+            .catch(err => {
+                console.log("Lỗi tải dữ liệu Family: ", err);
+                container.innerHTML = "<p style='color: #f44336; text-align: center;'>❌ Lỗi kết nối không thể tải dữ liệu!</p>";
+            });
         }
-        
-        function renderFamilyGrid(members) {
+
+        // 2. Sinh ra danh sách các Button (ĐÃ ĐỒNG BỘ: bấm nút gọi thẳng showFamilyModal(member))
+        function renderFamilyButtons() {
             const container = document.getElementById("family-buttons-container");
             if (!container) return;
-            container.innerHTML = "";
+            container.innerHTML = ""; 
             
-            members.forEach(m => {
-                let btn = document.createElement("button");
-                // Giữ nguyên class gốc của bạn (bạn có thể đổi thành "btn-member" nếu css của bạn dùng tên đó)
+            localFamilyData.forEach(member => {
+                const btn = document.createElement("button");
                 btn.className = "member-btn"; 
+                btn.textContent = member.nickname || member.fullname;
                 btn.style.margin = "5px";
-                btn.textContent = m.nickname || m.fullname;
-                
-                // Liên kết trực tiếp sang hàm mở modal chi tiết
-                btn.onclick = () => showFamilyModal(m);
+                // SỬA: Gọi trực tiếp hàm showFamilyModal và truyền object member sang
+                btn.onclick = () => showFamilyModal(member);
                 container.appendChild(btn);
             });
         }
-        
+
+        // 3. Hàm hiển thị Modal đi kèm cấu trúc 20 cột (Bao gồm BHXH mới thêm)
         function showFamilyModal(m) {
-            // Đã cấu trúc lại để đọc chính xác sơ đồ dữ liệu phân cấp trả về từ hàm doGet mới
             const fields = [
                 { l: "Biệt danh", v: m.nickname || "-" }, 
                 { l: "Họ tên", v: m.fullname || "-" }, 
@@ -1398,7 +1332,7 @@ input:checked + .slider:before {
                 { l: "Hộ chiếu: Ngày hết hạn", v: m.hochieu ? m.hochieu.ngayhethan : "-" }, 
                 { l: "Hộ chiếu: Nơi cấp", v: m.hochieu ? m.hochieu.noicap : "-" },
                 { l: "Thẻ BHYT", v: m.bhyt || "-" }, 
-                { l: "Mã số BHXH", v: m.bhxh || "-" }, // ✨ THÊM MỚI ĐOẠN NÀY ĐỂ HIỂN THỊ LÊN MODAL
+                { l: "Mã số BHXH", v: m.bhxh || "-" }, // Thêm mới hiển thị BHXH
                 { l: "Mã số thuế", v: m.masothue || "-" }, 
                 { l: "LLTP: Số", v: m.lltp ? m.lltp.so : "-" }, 
                 { l: "LLTP: Ngày cấp", v: m.lltp ? m.lltp.ngaycap : "-" }, 
@@ -1417,7 +1351,7 @@ input:checked + .slider:before {
                 row.className = "info-row";
                 row.innerHTML = `<div class="info-label">${f.l}</div><div class="info-value">${f.v}</div>`;
                 
-                // Click vào từng dòng để copy nhanh giá trị
+                // Click vào từng dòng để auto-copy nhanh giá trị
                 row.onclick = () => {
                     if(f.v !== "-") {
                         navigator.clipboard.writeText(f.v);
@@ -1436,19 +1370,228 @@ input:checked + .slider:before {
             }
             
             const modal = document.getElementById("familyModal");
-            if (modal) modal.style.display = "flex";
+            if (modal) modal.classList.add("show");
         }
         
-        function closeModal() { 
+        function closeFamilyModal() {
             const modal = document.getElementById("familyModal");
-            if (modal) modal.style.display = "none"; 
+            if (modal) modal.classList.remove("show");
         }
 
-        // ============================================================
+        // Tự động tải dữ liệu ngầm khi khởi chạy app
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if(localStorage.getItem("family_unlocked") === "true") {
+                    loadFamilyDataFromSheet();
+                }
+            }, 1000);
+        });
+
+        // XÓA TOÀN BỘ DỮ LIỆU APP VÀ ĐẶT LẠI
+        function resetAppCompletely() {
+            if (!confirm("CẢNH BÁO: Hành động này sẽ xóa toàn bộ lịch sử, cấu hình lưu trên thiết bị này và tải lại trang. Bạn có chắc chắn không?")) {
+                return;
+            }
+            
+            const userPassword = prompt("🔒 Vui lòng nhập mật khẩu xác nhận lấy từ Google Sheet để xóa dữ liệu:");
+            if (userPassword === null || userPassword.trim() === "") return;
+            
+            if (!CONFIG.apiEndpoint) {
+                alert("Chưa cấu hình API URL để kiểm tra mật khẩu!");
+                return;
+            }
+
+            fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(userPassword.trim())}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === "success" && res.match === true) {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        if (window.indexedDB) {
+                            indexedDB.deleteDatabase("FamilyFinancePWA");
+                        }
+                        alert("🗑️ Đã xác thực thành công! Toàn bộ bộ nhớ đệm thiết bị đã được xóa sạch. Ứng dụng đang tải lại...");
+                        window.location.reload(true); 
+                    } else {
+                        alert("❌ Mật khẩu không chính xác! Bạn không có quyền xóa dữ liệu ứng dụng.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi xác thực mật khẩu:", err);
+                    alert("Không thể kết nối đến hệ thống để xác thực mật khẩu lúc này!");
+                });
+        }
+
+        // HIỂN THỊ LỊCH SỬ GIAO DỊCH
+        function loadTransactionHistory() {
+            if (!CONFIG.apiEndpoint) return;
+            
+            const incomeContainer = document.getElementById("income-history-container");
+            const expenseContainer = document.getElementById("expense-history-container");
+            
+            if (!incomeContainer && !expenseContainer) return;
+            
+            fetch(`${CONFIG.apiEndpoint}?action=getTransactions`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === "success" && res.data.length > 0) {
+                        if (incomeContainer) incomeContainer.innerHTML = "";
+                        if (expenseContainer) expenseContainer.innerHTML = "";
+                        
+                        let hasIncome = false;
+                        let hasExpense = false;
+
+                        res.data.forEach(item => {
+                            const isExpense = item.amount < 0;
+                            const amountColor = isExpense ? "#FF5252" : "#4CAF50"; 
+                            const prefix = isExpense ? "" : "+"; 
+                            
+                            const formattedAmount = new Intl.NumberFormat('vi-VN', { 
+                                style: 'currency', 
+                                currency: 'VND' 
+                            }).format(item.amount);
+
+                            const row = document.createElement("div");
+                            row.style.display = "flex";
+                            row.style.justifyContent = "space-between";
+                            row.style.padding = "10px 4px";
+                            row.style.borderBottom = "1px solid #333";
+                            row.style.fontSize = "13px";
+                            row.style.alignItems = "center";
+                            row.innerHTML = `
+                                <div style="flex: 1; padding-right: 10px;">
+                                    <strong style="color: var(--theme-color); font-size: 14px;">${item.subtype || item.type}</strong>
+                                    <span style="color: #888; font-size: 11px; margin-left: 5px;">${item.type}</span>
+                                    <br>
+                                    <small style="color: #666; font-size: 11px;">${item.date}</small>
+                                    ${item.note ? `<br><small style="color: #aaa; font-style: italic;">👉 ${item.note}</small>` : ''}
+                                </div>
+                                <div style="color: ${amountColor}; font-weight: bold; font-size: 14px; text-align: right; white-space: nowrap;">
+                                    ${prefix}${formattedAmount}
+                                </div>
+                            `;
+
+                            if (isExpense) {
+                                if (expenseContainer) {
+                                    expenseContainer.appendChild(row);
+                                    hasExpense = true;
+                                }
+                            } else {
+                                if (incomeContainer) {
+                                    incomeContainer.appendChild(row);
+                                    hasIncome = true;
+                                }
+                            }
+                        });
+
+                        if (!hasIncome && incomeContainer) {
+                            incomeContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có khoản thu nào.</p>";
+                        }
+                        if (!hasExpense && expenseContainer) {
+                            expenseContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có khoản chi nào.</p>";
+                        }
+
+                    } else {
+                        if (incomeContainer) incomeContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có dữ liệu.</p>";
+                        if (expenseContainer) expenseContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có dữ liệu.</p>";
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi nạp lịch sử:", err);
+                    if (incomeContainer) incomeContainer.innerHTML = "<p style='color: #FF5252; text-align: center; font-size: 12px;'>Lỗi kết nối.</p>";
+                    if (expenseContainer) expenseContainer.innerHTML = "<p style='color: #FF5252; text-align: center; font-size: 12px;'>Lỗi kết nối.</p>";
+                });
+        }
+
+        // ĐỒNG BỘ DANH MỤC VÀ FAMILY GIỮA MÁY VÀ SERVER
+        function syncAllDataFromSheet() {
+            if (!navigator.onLine) {
+                alert("Thiết bị đang ngoại tuyến. Vui lòng kết nối internet để đồng bộ!");
+                return;
+            }
+            
+            if (!CONFIG.apiEndpoint) {
+                alert("Chưa cấu hình API URL (apiEndpoint) trong cài đặt!");
+                return;
+            }
+
+            const syncBtn = document.getElementById("btn-sync-data");
+            const originalText = syncBtn.innerHTML;
+            
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = "⏳ Đang đồng bộ...";
+            syncBtn.style.opacity = "0.7";
+
+            const syncCategories = fetch(`${CONFIG.apiEndpoint}?action=getCategories`).then(res => res.json());
+            const syncFamily = fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`).then(res => res.json());
+
+            Promise.all([syncCategories, syncFamily])
+            .then(([catRes, famRes]) => {
+                let successMessage = "";
+
+                if (catRes.status === "success") {
+                    if (typeof localCategories !== 'undefined') {
+                        localCategories = catRes.data;
+                    }
+                    if (db) {
+                        const tx = db.transaction("settings", "readwrite");
+                        tx.objectStore("settings").put({ key: "categories", value: catRes.data });
+                    }
+                    if (typeof updateCategoryDropdowns === 'function') {
+                        updateCategoryDropdowns(catRes.data);
+                    } else if (typeof loadCategories === 'function') {
+                        loadCategories(); 
+                    }
+                    successMessage += "✅ Đã cập nhật Danh mục mới.\n";
+                }
+
+                if (famRes.status === "success") {
+                    localFamilyData = famRes.data;
+                    renderFamilyButtons();
+                    successMessage += "✅ Đã cập nhật Thông tin gia đình.";
+                }
+
+                if (successMessage) alert(successMessage);
+                else alert("Đồng bộ hoàn thành nhưng không có dữ liệu nào thay đổi.");
+            })
+            .catch(err => {
+                console.error("Lỗi đồng bộ tổng thể:", err);
+                alert("Đồng bộ thất bại! Vui lòng kiểm tra lại mạng hoặc URL Apps Script.");
+            })
+            .finally(() => {
+                syncBtn.disabled = false;
+                syncBtn.innerHTML = originalText;
+                syncBtn.style.opacity = "1";
+            });
+        }
+
+        // Xử lý nút cuộn nhanh lên đầu trang (Scroll To Top)
+        window.onscroll = function() {
+            const btn = document.getElementById("scrollTopBtn");
+            if (btn) {
+                if (document.body.scrollTop > 250 || document.documentElement.scrollTop > 250) {
+                    btn.style.display = "flex";
+                } else { btn.style.display = "none"; }
+            }
+        };
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+        function loadInitialSettings() {
+            db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
+                e.target.result.forEach(item => {
+                    if(item.key === "mode" && document.getElementById("setting-mode")) document.getElementById("setting-mode").value = item.value;
+                    if(item.key === "color" && document.getElementById("setting-color")) document.getElementById("setting-color").value = item.value;
+                });
+                loadTheme();
+                initFormOptions();
+                updateRecurringCategories();
+                renderRulesList();
+                renderChartsAndStats();
+                loadTransactionHistory();
+            };
+        }
+
         // THEME FUNCTIONS - FIXED FOR DARK/LIGHT MODE
-        // ============================================================
-        
-        // Hàm tính độ sáng màu
         function getColorBrightness(hex) {
             let r, g, b;
             if (hex.startsWith('#')) {
@@ -1466,7 +1609,6 @@ input:checked + .slider:before {
             return (r * 299 + g * 587 + b * 114) / 1000;
         }
 
-        // Hàm áp dụng theme màu
         async function applyTheme() {
             const colorInput = document.getElementById("setting-color");
             if (!colorInput) return;
@@ -1475,47 +1617,35 @@ input:checked + .slider:before {
             const root = document.documentElement;
             const colorLower = themeColor.toLowerCase();
             
-            // 1. Cập nhật biến màu
             root.style.setProperty('--theme-color', colorLower);
             
-            // 2. Kiểm tra màu vàng
             const isYellow = /yellow|#f{0,2}fe?[cd]|#ff[c-e]|#ffee58|#ffeb3b|#ffc107|#ffff00/i.test(colorLower);
             root.classList.toggle("theme-yellow", isYellow);
             
-            // 3. Tự động tính màu chữ tương phản
             const brightness = getColorBrightness(colorLower);
             const textColor = brightness > 150 ? '#111111' : '#ffffff';
             root.style.setProperty('--text-on-theme', textColor);
             
-            // 4. Cập nhật màu cho toggle switch
             const toggle = document.getElementById('darkModeToggle');
             if (toggle && toggle.checked) {
-                document.querySelector('.slider').style.backgroundColor = themeColor;
+                const slider = document.querySelector('.slider');
+                if (slider) slider.style.backgroundColor = themeColor;
             }
             
-            // 5. Lưu vào storage
             try {
                 if (db) {
-                    await new Promise((resolve, reject) => {
-                        const tx = db.transaction("settings", "readwrite");
-                        const store = tx.objectStore("settings");
-                        const req = store.put({ key: "color", value: themeColor });
-                        req.onsuccess = resolve;
-                        req.onerror = reject;
-                    });
+                    const tx = db.transaction("settings", "readwrite");
+                    tx.objectStore("settings").put({ key: "color", value: themeColor });
                 } else {
                     localStorage.setItem('themeColor', themeColor);
                 }
             } catch (error) {
-                console.warn('Không thể lưu theme:', error);
                 localStorage.setItem('themeColor', themeColor);
             }
         }
 
-        // Hàm toggle dark mode
         function toggleDarkMode(enable) {
             const root = document.documentElement;
-            
             if (enable) {
                 root.setAttribute('data-theme', 'dark');
                 localStorage.setItem('darkMode', 'true');
@@ -1523,8 +1653,6 @@ input:checked + .slider:before {
                 root.removeAttribute('data-theme');
                 localStorage.setItem('darkMode', 'false');
             }
-            
-            // Cập nhật màu toggle switch
             const colorInput = document.getElementById("setting-color");
             if (colorInput) {
                 const slider = document.querySelector('.slider');
@@ -1534,9 +1662,7 @@ input:checked + .slider:before {
             }
         }
 
-        // Hàm load theme từ storage
         async function loadTheme() {
-            // Load dark mode
             const darkMode = localStorage.getItem('darkMode');
             if (darkMode === 'true') {
                 document.documentElement.setAttribute('data-theme', 'dark');
@@ -1551,9 +1677,7 @@ input:checked + .slider:before {
                 }
             }
             
-            // Load color theme
             let savedColor = localStorage.getItem('themeColor');
-            
             if (!savedColor && db) {
                 try {
                     const tx = db.transaction("settings", "readonly");
@@ -1567,19 +1691,12 @@ input:checked + .slider:before {
                     console.warn('Không thể đọc từ IndexedDB');
                 }
             }
-            
             if (savedColor) {
                 const colorInput = document.getElementById("setting-color");
-                if (colorInput) {
-                    colorInput.value = savedColor;
-                }
+                if (colorInput) colorInput.value = savedColor;
                 await applyTheme();
             }
         }
-
-        // ============================================================
-        // END THEME FUNCTIONS
-        // ============================================================
 
         function addRecurringRule(e) {
             e.preventDefault();
@@ -1592,7 +1709,6 @@ input:checked + .slider:before {
 
             const rule = { action, type, subtype, day, amount, note: note || "", id: Date.now() };
             
-            // 1. Lưu vào bộ nhớ máy để chạy offline tự động
             const tx = db.transaction("settings", "readwrite");
             tx.objectStore("settings").put({ key: `rule_${rule.id}`, value: rule });
             
@@ -1602,7 +1718,6 @@ input:checked + .slider:before {
                 renderRulesList();
                 checkRecurringRules();
                 
-                // 2. Tự động bắn một bản lên Google Sheet để quản lý từ xa nếu có mạng
                 if (navigator.onLine && CONFIG.apiEndpoint) {
                     fetch(CONFIG.apiEndpoint, {
                         method: 'POST',
@@ -1619,6 +1734,7 @@ input:checked + .slider:before {
         function renderRulesList() {
             if(!db) return;
             const container = document.getElementById("recurring-rules-list");
+            if (!container) return;
             container.innerHTML = "<h4>Khoản tự động đã cấu hình:</h4>";
             db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
                 e.target.result.forEach(item => {
@@ -1642,7 +1758,6 @@ input:checked + .slider:before {
                 getAllTransactions(transactions => {
                     rules.forEach(rule => {
                         if (currentDay >= rule.day) {
-                            // Tạo key duy nhất theo tháng/năm để chống chèn trùng lặp
                             let uniqKey = `${rule.type}_${rule.subtype}_${rule.day}_${today.getFullYear()}_${today.getMonth()}`;
                             let exists = transactions.find(t => t.recurringKey === uniqKey);
                             
@@ -1650,8 +1765,8 @@ input:checked + .slider:before {
                                 let execDate = new Date(); execDate.setDate(rule.day);
                                 const transaction = {
                                     timestamp: execDate.toISOString(),
-                                    type: rule.type,       // Lấy chuẩn Type đã cấu hình
-                                    subtype: rule.subtype, // Lấy chuẩn Subtype đã cấu hình
+                                    type: rule.type,       
+                                    subtype: rule.subtype, 
                                     amount: rule.action === 'chi' ? -Math.abs(rule.amount) : rule.amount,
                                     note: rule.note ? rule.note + " (Hệ thống tự động chèn)" : "Hệ thống tự động chèn",
                                     synced: 0,
@@ -1667,309 +1782,6 @@ input:checked + .slider:before {
                         }
                     });
                 });
-            };
-        }
-
-        // XỬ LÍ HIỂN THỊ FAMILY
-        let localFamilyData = []; // Lưu trữ dữ liệu tải từ Sheet về
-
-        // 1. Tự động gọi API lấy dữ liệu thành viên từ Google Sheet
-        function loadFamilyDataFromSheet() {
-            if (!navigator.onLine || !CONFIG.apiEndpoint) return;
-            
-            fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`)
-            .then(res => res.json())
-            .then(resData => {
-                if (resData.status === "success") {
-                    localFamilyData = resData.data;
-                    renderFamilyButtons();
-                }
-            })
-            .catch(err => {
-                console.log("Lỗi tải dữ liệu Family: ", err);
-                document.getElementById("family-loading-text").textContent = "Không thể tải dữ liệu. Vui lòng kiểm tra mạng.";
-            });
-        }
-
-        // 2. Sinh ra danh sách các Button dựa trên danh sách Nickname
-        function renderFamilyButtons() {
-            const container = document.getElementById("family-buttons-container");
-            container.innerHTML = ""; // Xóa chữ đang tải
-            
-            if (localFamilyData.length === 0) {
-                container.innerHTML = "<p>Chưa có dữ liệu thành viên trên tab FAMILY.</p>";
-                return;
-            }
-            
-            localFamilyData.forEach(member => {
-                const btn = document.createElement("button");
-                btn.className = "btn"; 
-                btn.textContent = member.nickname;
-                btn.style.flex = "1 1 calc(50% - 5px)"; 
-                btn.style.minWidth = "120px";
-                btn.style.margin = "5px 0";
-                btn.onclick = () => openFamilyModal(member.id);
-                container.appendChild(btn);
-            });
-        }
-
-        // 3. Hàm tiện ích để thực hiện sao chép văn bản và hiển thị thông báo nhanh (Toast)
-        function copyToClipboard(text, fieldName) {
-            if (!text || text === "--") return;
-            navigator.clipboard.writeText(text).then(() => {
-                alert(`Đã sao chép ${fieldName}: ${text}`);
-            }).catch(err => {
-                console.error("Không thể sao chép: ", err);
-            });
-        }
-
-        
-        
-        // 5. Hàm đóng Modal
-        function closeFamilyModal() {
-            document.getElementById("family-modal").style.display = "none";
-        }
-
-        // Tự động kích hoạt khi tải trang xong
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(loadFamilyDataFromSheet, 1000);
-        });
-
-        // XÓA TOÀN BỘ DỮ LIỆU APP VÀ ĐẶT LẠI
-        function resetAppCompletely() {
-            // 1. Lớp xác nhận đầu tiên tránh bấm nhầm
-            if (!confirm("CẢNH BÁO: Hành động này sẽ xóa toàn bộ lịch sử, cấu hình lưu trên thiết bị này và tải lại trang. Bạn có chắc chắn không?")) {
-                return;
-            }
-            
-            // 2. Yêu cầu người dùng nhập mật khẩu
-            const userPassword = prompt("🔒 Vui lòng nhập mật khẩu xác nhận lấy từ Google Sheet để xóa dữ liệu:");
-            
-            if (userPassword === null || userPassword.trim() === "") {
-                return; // Người dùng bấm Hủy hoặc không nhập gì
-            }
-            
-            if (!CONFIG.apiEndpoint) {
-                alert("Chưa cấu hình API URL để kiểm tra mật khẩu!");
-                return;
-            }
-
-            // 3. Gửi mật khẩu lên Google Sheet để check bảo mật kín
-            fetch(`${CONFIG.apiEndpoint}?action=checkResetPassword&password=${encodeURIComponent(userPassword.trim())}`)
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status === "success" && res.match === true) {
-                        
-                        // MẬT KHẨU ĐÚNG -> TIẾN HÀNH XÓA SẠCH
-                        localStorage.clear();
-                        sessionStorage.clear();
-                        
-                        if (window.indexedDB) {
-                            indexedDB.deleteDatabase("settings");
-                        }
-                        
-                        alert("🗑️ Đã xác thực thành công! Toàn bộ bộ nhớ đệm thiết bị đã được xóa sạch. Ứng dụng đang tải lại...");
-                        window.location.reload(true); 
-                        
-                    } else {
-                        // MẬT KHẨU SAI
-                        alert("❌ Mật khẩu không chính xác! Bạn không có quyền xóa dữ liệu ứng dụng.");
-                    }
-                })
-                .catch(err => {
-                    console.error("Lỗi xác thực mật khẩu:", err);
-                    alert("Không thể kết nối đến hệ thống để xác thực mật khẩu lúc này!");
-                });
-        }
-
-        // HIỂN THỊ LỊCH SỬ GIAO DỊCH (Nếu số tiền < 0: Hiển thị dấu trừ, màu đỏ (Chi). Nếu số tiền > 0: Hiển thị dấu cộng, màu xanh (Thu) và tự động làm tròn số tiền theo định dạng tiền tệ VNĐ gọn gàng.)
-        function loadTransactionHistory() {
-            if (!CONFIG.apiEndpoint) return;
-            
-            const incomeContainer = document.getElementById("income-history-container");
-            const expenseContainer = document.getElementById("expense-history-container");
-            
-            if (!incomeContainer && !expenseContainer) return;
-            
-            fetch(`${CONFIG.apiEndpoint}?action=getTransactions`)
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status === "success" && res.data.length > 0) {
-                        // Xóa dữ liệu cũ của cả 2 tab trước khi nạp mới
-                        if (incomeContainer) incomeContainer.innerHTML = "";
-                        if (expenseContainer) expenseContainer.innerHTML = "";
-                        
-                        let hasIncome = false;
-                        let hasExpense = false;
-
-                        res.data.forEach(item => {
-                            const isExpense = item.amount < 0;
-                            const amountColor = isExpense ? "#FF5252" : "#4CAF50"; 
-                            const prefix = isExpense ? "" : "+"; 
-                            
-                            // Định dạng số tiền VNĐ mẫu: 4.934.842 ₫
-                            const formattedAmount = new Intl.NumberFormat('vi-VN', { 
-                                style: 'currency', 
-                                currency: 'VND' 
-                            }).format(item.amount);
-
-                            // Tạo layout cho từng dòng lịch sử
-                            const row = document.createElement("div");
-                            row.style.display = "flex";
-                            row.style.justifyContent = "space-between";
-                            row.style.padding = "10px 4px";
-                            row.style.borderBottom = "1px solid #333";
-                            row.style.fontSize = "13px";
-                            row.style.alignItems = "center";
-                            row.innerHTML = `
-                                <div style="flex: 1; padding-right: 10px;">
-                                    <strong style="color: var(--theme-color); font-size: 14px;">${item.subtype || item.type}</strong>
-                                    <span style="color: #888; font-size: 11px; margin-left: 5px;">${item.type}</span>
-                                    <br>
-                                    <small style="color: #666; font-size: 11px;">${item.date}</small>
-                                    ${item.note ? `<br><small style="color: #aaa; font-style: italic;">👉 ${item.note}</small>` : ''}
-                                </div>
-                                <div style="color: ${amountColor}; font-weight: bold; font-size: 14px; text-align: right; white-space: nowrap;">
-                                    ${prefix}${formattedAmount}
-                                </div>
-                            `;
-
-                            // Lọc và phân phối về đúng Tab
-                            if (isExpense) {
-                                if (expenseContainer) {
-                                    expenseContainer.appendChild(row);
-                                    hasExpense = true;
-                                }
-                            } else {
-                                if (incomeContainer) {
-                                    incomeContainer.appendChild(row);
-                                    hasIncome = true;
-                                }
-                            }
-                        });
-
-                        // Nếu tab nào trống thì hiển thị dòng thông báo rỗng
-                        if (!hasIncome && incomeContainer) {
-                            incomeContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có khoản thu nào.</p>";
-                        }
-                        if (!hasExpense && expenseContainer) {
-                            expenseContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có khoản chi nào.</p>";
-                        }
-
-                    } else {
-                        if (incomeContainer) incomeContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có dữ liệu.</p>";
-                        if (expenseContainer) expenseContainer.innerHTML = "<p style='color: #666; font-size: 13px; text-align: center; padding: 15px 0;'>Chưa có dữ liệu.</p>";
-                    }
-                })
-                .catch(err => {
-                    console.error("Lỗi nạp lịch sử:", err);
-                    if (incomeContainer) incomeContainer.innerHTML = "<p style='color: #FF5252; text-align: center; font-size: 12px;'>Lỗi kết nối.</p>";
-                    if (expenseContainer) expenseContainer.innerHTML = "<p style='color: #FF5252; text-align: center; font-size: 12px;'>Lỗi kết nối.</p>";
-                });
-        }
-
-        // ĐỒNG BỘ DANH MỤC VÀ FAMILY GIỮA MÁY VÀ SERVER
-        function syncAllDataFromSheet() {
-            // 1. Kiểm tra trạng thái mạng trước khi đồng bộ
-            if (!navigator.onLine) {
-                alert("Thiết bị đang ngoại tuyến. Vui lòng kết nối internet để đồng bộ!");
-                return;
-            }
-            
-            if (!CONFIG.apiEndpoint) {
-                alert("Chưa cấu hình API URL (apiEndpoint) trong cài đặt!");
-                return;
-            }
-
-            const syncBtn = document.getElementById("btn-sync-data");
-            const originalText = syncBtn.innerHTML;
-            
-            // Đổi trạng thái nút bấm để báo hiệu đang chạy
-            syncBtn.disabled = true;
-            syncBtn.innerHTML = "⏳ Đang đồng bộ...";
-            syncBtn.style.opacity = "0.7";
-
-            // 2. Chạy song song 2 luồng tải danh mục và tải thông tin gia đình
-            const syncCategories = fetch(`${CONFIG.apiEndpoint}?action=getCategories`).then(res => res.json());
-            const syncFamily = fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`).then(res => res.json());
-
-            Promise.all([syncCategories, syncFamily])
-            .then(([catRes, famRes]) => {
-                let successMessage = "";
-
-                // Xử lý nạp danh mục thu chi
-                if (catRes.status === "success") {
-                    // Lưu dữ liệu danh mục mới vào biến cục bộ của app (ví dụ: localCategories)
-                    // Thay thế tên biến 'localCategories' bằng tên biến danh mục thực tế trong code của bạn nếu có
-                    if (typeof localCategories !== 'undefined') {
-                        localCategories = catRes.data;
-                    }
-                    
-                    // Lưu vào IndexedDB/LocalStorage nếu ứng dụng của bạn có dùng
-                    if (db) {
-                        const tx = db.transaction("settings", "readwrite");
-                        tx.objectStore("settings").put({ key: "categories", value: catRes.data });
-                    }
-
-                    // Gọi lại hàm cập nhật ô chọn (select options) trên giao diện thu chi của bạn
-                    if (typeof updateCategoryDropdowns === 'function') {
-                        updateCategoryDropdowns(catRes.data);
-                    } else if (typeof loadCategories === 'function') {
-                        loadCategories(); // Hoặc hàm nạp danh mục cũ của bạn
-                    }
-                    successMessage += "✅ Đã cập nhật Danh mục mới.\n";
-                }
-
-                // Xử lý nạp thông tin gia đình
-                if (famRes.status === "success") {
-                    localFamilyData = famRes.data;
-                    
-                    // Vẽ lại các nút bấm thành viên ở tab Family
-                    if (typeof renderFamilyButtons === 'function') {
-                        renderFamilyButtons();
-                    }
-                    successMessage += "✅ Đã cập nhật Thông tin gia đình.";
-                }
-
-                // Thông báo thành công cho người dùng
-                if (successMessage) {
-                    alert(successMessage);
-                } else {
-                    alert("Đồng bộ hoàn thành nhưng không có dữ liệu nào thay đổi.");
-                }
-            })
-            .catch(err => {
-                console.error("Lỗi đồng bộ tổng thể:", err);
-                alert("Đồng bộ thất bại! Vui lòng kiểm tra lại mạng hoặc URL Apps Script.");
-            })
-            .finally(() => {
-                // Trả lại trạng thái nút bấm ban đầu
-                syncBtn.disabled = false;
-                syncBtn.innerHTML = originalText;
-                syncBtn.style.opacity = "1";
-            });
-        }
-
-        // Xử lý nút cuộn nhanh lên đầu trang (Scroll To Top)
-        window.onscroll = function() {
-            const btn = document.getElementById("scrollTopBtn");
-            if (document.body.scrollTop > 250 || document.documentElement.scrollTop > 250) {
-                btn.style.display = "flex";
-            } else { btn.style.display = "none"; }
-        };
-        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-
-        function loadInitialSettings() {
-            db.transaction("settings", "readonly").objectStore("settings").getAll().onsuccess = function(e) {
-                e.target.result.forEach(item => {
-                    if(item.key === "mode") document.getElementById("setting-mode").value = item.value;
-                    if(item.key === "color") document.getElementById("setting-color").value = item.value;
-                });
-                loadTheme();
-                initFormOptions();
-                updateRecurringCategories();
-                renderRulesList();
-                renderChartsAndStats();
             };
         }
 
