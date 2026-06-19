@@ -671,6 +671,7 @@ input:checked + .slider:before {
         </div>
     </div>
 
+    <!-- TAB FAMILY -->
     <div id="tab-family" class="tab-content">
         <div id="family-auth-view" class="card" style="text-align: center; padding: 40px 20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
@@ -707,7 +708,9 @@ input:checked + .slider:before {
                 </div>
             </div>
         </div>
-    </div> <div id="tab-settings" class="tab-content">
+    </div> <!-- end TAB FAMILY -->
+
+    <div id="tab-settings" class="tab-content">
         <div class="card">
             <h3>Thay Đổi Giao Diện</h3>
             <div class="theme-switch-wrapper">
@@ -1316,27 +1319,35 @@ input:checked + .slider:before {
         }
 
         // 3. Hàm hiển thị Modal đi kèm cấu trúc 20 cột (Bao gồm BHXH mới thêm)
+        // 3. Hàm hiển thị Modal đi kèm cấu trúc 20 cột (Đã sửa lỗi đọc dữ liệu phẳng từ Sheet)
         function showFamilyModal(m) {
+            if (!m) return;
+            
+            // Chuẩn hóa và mapping đúng với các tên cột phẳng từ Google Sheets gửi về
             const fields = [
-                { l: "Biệt danh", v: m.nickname || "-" }, 
-                { l: "Họ tên", v: m.fullname || "-" }, 
-                { l: "Ngày sinh", v: m.dob || "-" }, 
+                { l: "Biệt danh", v: m.nickname || m.bietdanh || "-" }, 
+                { l: "Họ tên", v: m.fullname || m.hoten || "-" }, 
+                { l: "Ngày sinh", v: m.dob || m.ngaysinh || "-" }, 
                 { l: "Nơi sinh", v: m.noisinh || "-" }, 
                 { l: "Địa chỉ", v: m.diachi || "-" },
-                { l: "CCCD: Số", v: m.cccd ? m.cccd.so : "-" }, 
-                { l: "CCCD: Ngày cấp", v: m.cccd ? m.cccd.ngaycap : "-" }, 
-                { l: "CCCD: Ngày hết hạn", v: m.cccd ? m.cccd.ngayhethan : "-" }, 
-                { l: "CCCD: Nơi cấp", v: m.cccd ? m.cccd.noicap : "-" },
-                { l: "Hộ chiếu: Số", v: m.hochieu ? m.hochieu.so : "-" }, 
-                { l: "Hộ chiếu: Ngày cấp", v: m.hochieu ? m.hochieu.ngaycap : "-" }, 
-                { l: "Hộ chiếu: Ngày hết hạn", v: m.hochieu ? m.hochieu.ngayhethan : "-" }, 
-                { l: "Hộ chiếu: Nơi cấp", v: m.hochieu ? m.hochieu.noicap : "-" },
+                // Sửa lỗi đọc Object lồng bằng cách kiểm tra cả biến phẳng cccd_so hoặc object cccd
+                { l: "CCCD: Số", v: m.cccd_so || (m.cccd ? m.cccd.so : null) || m.socccd || "-" }, 
+                { l: "CCCD: Ngày cấp", v: m.cccd_ngaycap || (m.cccd ? m.cccd.ngaycap : null) || "-" }, 
+                { l: "CCCD: Ngày hết hạn", v: m.cccd_ngayhethan || (m.cccd ? m.cccd.ngayhethan : null) || "-" }, 
+                { l: "CCCD: Nơi cấp", v: m.cccd_noicap || (m.cccd ? m.cccd.noicap : null) || "-" },
+                
+                { l: "Hộ chiếu: Số", v: m.hochieu_so || (m.hochieu ? m.hochieu.so : null) || "-" }, 
+                { l: "Hộ chiếu: Ngày cấp", v: m.hochieu_ngaycap || (m.hochieu ? m.hochieu.ngaycap : null) || "-" }, 
+                { l: "Hộ chiếu: Ngày hết hạn", v: m.hochieu_ngayhethan || (m.hochieu ? m.hochieu.ngayhethan : null) || "-" }, 
+                { l: "Hộ chiếu: Nơi cấp", v: m.hochieu_noicap || (m.hochieu ? m.hochieu.noicap : null) || "-" },
+                
                 { l: "Thẻ BHYT", v: m.bhyt || "-" }, 
-                { l: "Mã số BHXH", v: m.bhxh || "-" }, // Thêm mới hiển thị BHXH
-                { l: "Mã số thuế", v: m.masothue || "-" }, 
-                { l: "LLTP: Số", v: m.lltp ? m.lltp.so : "-" }, 
-                { l: "LLTP: Ngày cấp", v: m.lltp ? m.lltp.ngaycap : "-" }, 
-                { l: "LLTP: Nơi cấp", v: m.lltp ? m.lltp.noicap : "-" }
+                { l: "Mã số BHXH", v: m.bhxh || "-" }, 
+                { l: "Mã số thuế", v: m.masothue || m.mst || "-" }, 
+                
+                { l: "LLTP: Số", v: m.lltp_so || (m.lltp ? m.lltp.so : null) || "-" }, 
+                { l: "LLTP: Ngày cấp", v: m.lltp_ngaycap || (m.lltp ? m.lltp.ngaycap : null) || "-" }, 
+                { l: "LLTP: Nơi cấp", v: m.lltp_noicap || (m.lltp ? m.lltp.noicap : null) || "-" }
             ];
         
             const detailsDiv = document.getElementById("modal-member-details");
@@ -1349,13 +1360,24 @@ input:checked + .slider:before {
                 fullBlockText += `${f.l}: ${f.v}\n`;
                 let row = document.createElement("div");
                 row.className = "info-row";
-                row.innerHTML = `<div class="info-label">${f.l}</div><div class="info-value">${f.v}</div>`;
+                row.style.cursor = "pointer"; // Tạo hiệu ứng chỉ tay dễ biết là click được
+                row.innerHTML = `<div class="info-label" style="font-weight: bold; margin-bottom: 2px;">${f.l}</div><div class="info-value">${f.v}</div>`;
                 
                 // Click vào từng dòng để auto-copy nhanh giá trị
                 row.onclick = () => {
                     if(f.v !== "-") {
-                        navigator.clipboard.writeText(f.v);
-                        alert(`Đã auto-copy: ${f.v}`);
+                        navigator.clipboard.writeText(f.v).then(() => {
+                            alert(`Đã copy: ${f.v}`);
+                        }).catch(err => {
+                            // Phương án backup nếu browser chặn sao chép thẳng
+                            const el = document.createElement('textarea');
+                            el.value = f.v;
+                            document.body.appendChild(el);
+                            el.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(el);
+                            alert(`Đã copy: ${f.v}`);
+                        });
                     }
                 };
                 detailsDiv.appendChild(row);
@@ -1364,18 +1386,26 @@ input:checked + .slider:before {
             const copyAllBtn = document.getElementById("btn-copy-all");
             if (copyAllBtn) {
                 copyAllBtn.onclick = () => {
-                    navigator.clipboard.writeText(fullBlockText);
-                    alert("Đã copy toàn bộ thông tin lý lịch!");
+                    navigator.clipboard.writeText(fullBlockText).then(() => {
+                        alert("Đã copy toàn bộ thông tin lý lịch!");
+                    });
                 };
             }
             
             const modal = document.getElementById("familyModal");
-            if (modal) modal.classList.add("show");
+            if (modal) {
+                // Ép hiển thị trực tiếp bằng style đề phòng class .show bị lỗi CSS đè
+                modal.style.display = "flex";
+                modal.classList.add("show");
+            }
         }
         
         function closeFamilyModal() {
             const modal = document.getElementById("familyModal");
-            if (modal) modal.classList.remove("show");
+            if (modal) {
+                modal.style.display = "none";
+                modal.classList.remove("show");
+            }
         }
 
         // Tự động tải dữ liệu ngầm khi khởi chạy app
