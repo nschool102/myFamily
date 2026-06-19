@@ -1347,11 +1347,51 @@ input:checked + .slider:before {
         }
 
         function generateFamilyInterface() {
-            if (navigator.onLine && CONFIG.apiEndpoint) {
-                fetch(`${CONFIG.apiEndpoint}?action=getFamily`)
-                .then(res => res.json()).then(data => renderFamilyGrid(data))
-                .catch(() => renderFamilyGrid(sampleFamily));
-            } else { renderFamilyGrid(sampleFamily); }
+            const container = document.getElementById("family-buttons-container");
+            if (!container) return;
+            
+            // Hiện chữ đang tải dữ liệu để người dùng biết app đang chạy
+            container.innerHTML = "<p style='color: #aaa; text-align: center;'>🔄 Đang tải dữ liệu thành viên từ Google Sheet...</p>";
+        
+            if (!CONFIG.apiEndpoint) {
+                container.innerHTML = "<p style='color: #f44336;'>Chưa cấu hình API URL!</p>";
+                return;
+            }
+        
+            // Gọi API lấy dữ liệu thật từ tab FAMILY trên Google Sheet
+            fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === "success" && res.data && res.data.length > 0) {
+                        // Xóa chữ đang tải
+                        container.innerHTML = ""; 
+                        
+                        // Mảng dữ liệu thật từ Sheet trả về
+                        const familyData = res.data; 
+                        
+                        // VẼ CÁC NÚT BẤM THÀNH VIÊN LÊN GIAO DIỆN
+                        familyData.forEach((member, index) => {
+                            const btn = document.createElement("button");
+                            btn.className = "btn-member"; // Đổi class theo đúng CSS nút bấm cũ của bạn
+                            btn.style.margin = "5px";
+                            btn.textContent = member.nickname || member.fullname;
+                            
+                            // Sự kiện khi bấm vào từng thành viên để xem thông tin chi tiết (CCCD, Hộ chiếu...)
+                            btn.onclick = function() {
+                                showMemberDetails(member); // Đổi tên hàm xem chi tiết theo đúng code cũ của bạn
+                            };
+                            
+                            container.appendChild(btn);
+                        });
+                        
+                    } else {
+                        container.innerHTML = "<p style='color: #aaa; text-align: center;'>📭 Chưa có dữ liệu thành viên nào trên tab FAMILY của Google Sheet.</p>";
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi lấy dữ liệu Family:", err);
+                    container.innerHTML = "<p style='color: #f44336; text-align: center;'>❌ Lỗi kết nối không thể tải dữ liệu thành viên!</p>";
+                });
         }
 
         function renderFamilyGrid(members) {
