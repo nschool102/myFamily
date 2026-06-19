@@ -117,24 +117,30 @@ body {
 /* ==========================================================================
    5. NAVIGATION TABS (Căn giữa, giới hạn rộng cho iPhone màn lớn)
    ========================================================================== */
+/* ==========================================================================
+   5. NAVIGATION TABS (Sửa lỗi tràn viền - Ôm khít theo Card nội dung)
+   ========================================================================== */
 .nav-tabs {
     position: fixed;
-    bottom: 0;
+    bottom: 15px; /* Đẩy lên một chút tạo hiệu ứng nổi gầm giường (Floating) cực đẹp */
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
-    max-width: 600px; /* Giới hạn chiều rộng bằng khu vực nội dung card, không bị tràn hết viền màn hình ngang */
+    width: calc(100% - 30px); /* Thu hẹp lại để chừa đúng 15px hai bên lề giống như Card */
+    max-width: 570px; /* Giới hạn độ rộng tối đa cho màn hình lớn */
     background-color: var(--nav-bg);
     display: flex;
     justify-content: space-around;
-    border-top: 1px solid var(--nav-border);
-    border-left: 1px solid var(--nav-border);
-    border-right: 1px solid var(--nav-border);
-    border-radius: 12px 12px 0 0;
+    
+    /* Bo góc tròn toàn diện xung quanh thanh điều hướng để không còn cảm giác bị tràn bẹt */
+    border: 1px solid var(--nav-border);
+    border-radius: 16px; 
+    
     z-index: 100;
-    box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     transition: background-color 0.3s ease, border-color 0.3s ease;
-    padding-bottom: env(safe-area-inset-bottom, 15px); /* Khoảng cách an toàn cho thanh vuốt iPhone 16 Pro Max */
+    
+    /* Khoảng cách an toàn bên trong nút cho iPhone */
+    padding-bottom: env(safe-area-inset-bottom, 0px); 
 }
 
 .tab-btn {
