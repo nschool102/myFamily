@@ -670,8 +670,8 @@ input:checked + .slider:before {
 
         <div class="card">
             <h3>Section 3: Tỷ Lệ Nguồn Thu</h3>
-            <div class="stat-row"><span style="color: #8BC34A; font-weight: bold;">MÌNH</span><strong id="sec3-Mine">0</strong></div>
-            <div class="stat-row"><span style="color: #E91E63; font-weight: bold;">CON CỢP</span><strong id="sec3-Tiger">0</strong></div>
+            <div class="stat-row"><span style="color: #8BC34A; font-weight: bold;">MÌNH</span><strong id="sec3-Mine" style="color: #8BC34A; font-weight: bold;">0</strong></div>
+            <div class="stat-row"><span style="color: #E91E63; font-weight: bold;">CON CỢP</span><strong id="sec3-Tiger" style="color: #E91E63; font-weight: bold;">0</strong></div>
             <div class="chart-container">
                 <canvas id="chart-sec3-pie"></canvas>
             </div>
@@ -686,9 +686,9 @@ input:checked + .slider:before {
                 </select>
             </div>
             <div class="stat-row"><span>Số Dư Hiện Tại:</span><strong id="sec4-balance">0</strong></div>
-            <div class="stat-row"><span>Tổng Thu:</span><strong id="sec4-thu">0</strong></div>
-            <div class="stat-row"><span>Tổng Chi Thực Tế:</span><strong id="sec4-net-chi">0</strong></div>
-            <div class="stat-row"><span>Tổng Số Tiền Tiết Kiệm:</span><strong id="sec4-savings" style="color:var(--theme-color);">0</strong></div>
+            <div class="stat-row"><span>Tổng Thu:</span><strong id="sec4-thu" style="color:#4CAF50;">0</strong></div>
+            <div class="stat-row"><span>Tổng Chi Thực Tế:</span><strong id="sec4-net-chi" style="color:#F44336;">0</strong></div>
+            <div class="stat-row"><span>Tổng Số Tiền Tiết Kiệm:</span><strong id="sec4-savings" style="color:#FFEB3B;">0</strong></div>
             <div class="chart-container">
                 <canvas id="chart-sec4-pie"></canvas>
             </div>
@@ -936,7 +936,8 @@ input:checked + .slider:before {
                     isSyncing = false; 
                 }).catch(() => { isSyncing = false; });
             });
-        }
+        } // end function syncToGoogleSheets()
+        
         window.addEventListener('online', syncToGoogleSheets);
 
         function renderPieChart(canvasId, labels, dataset, customColors = null) {
@@ -946,10 +947,7 @@ input:checked + .slider:before {
             const ctx = canvasEl.getContext('2d');
             let total = dataset.reduce((a, b) => a + Math.abs(b), 0);
             let defaultColors = ['#4CAF50', '#F44336', '#FF9800', '#2196F3', '#9C27B0', '#E91E63'];
-            
-            // TỰ ĐỘNG LẤY MÀU CHỮ THEO THEO LIGHT/DARK MODE HIỆN TẠI CỦA APP
-            const currentTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim() || '#333333';
-
+        
             charts[canvasId] = new Chart(ctx, {
                 type: 'pie',
                 data: { labels: labels, datasets: [{ data: dataset, backgroundColor: customColors || defaultColors }] },
@@ -957,23 +955,29 @@ input:checked + .slider:before {
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        // ==========================================================
-                        // ĐOẠN THÊM MỚI: CẤU HÌNH MÀU VÀ STYLE CHỮ CHO "MÌNH" & "CON CỢP"
-                        // ==========================================================
                         legend: {
                             display: true,
-                            position: 'top', // Hiển thị nằm ở phía trên biểu đồ
+                            position: 'top',
                             labels: {
-                                color: currentTextColor, // Màu chữ tự động đổi theo nền Sáng/Tối
-                                font: {
-                                    size: 13,            // Cỡ chữ vừa vặn, dễ nhìn trên điện thoại
-                                    weight: 'bold',      // Định dạng CHỮ ĐẬM nét sắc sảo
-                                    family: 'inherit'    // Dùng chung font chữ hệ thống của app
+                                // ==========================================================
+                                // ĐOẠN SỬA LỖI: TỰ ĐỘNG ĐỔI MÀU CHỮ TRÙNG MÀU BIỂU ĐỒ
+                                // ==========================================================
+                                color: function(context) {
+                                    // Lấy danh sách màu nền đang sử dụng cho biểu đồ này
+                                    const bgColors = context.chart.data.datasets[0].backgroundColor;
+                                    // Lấy vị trí (index) của nhãn đang vẽ và trả về màu tương ứng
+                                    const index = context.index;
+                                    return bgColors[index] || '#ffffff';
                                 },
-                                padding: 12              // Khoảng cách giữa các ô chú thích thông thoáng hơn
+                                // ==========================================================
+                                font: {
+                                    size: 13,
+                                    weight: 'bold',
+                                    family: 'inherit'
+                                },
+                                padding: 12
                             }
                         },
-                        // ==========================================================
                         datalabels: {
                             color: ctx => { let c = ctx.dataset.backgroundColor[ctx.dataIndex]; return (c === '#FFEB3B' || c === '#8BC34A') ? '#111111' : '#ffffff'; },
                             font: { weight: 'bold', size: 12 }, anchor: 'center', align: 'center',
