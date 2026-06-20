@@ -979,7 +979,7 @@ input:checked + .slider:before {
                 let expList = sortedData.filter(t => t.amount < 0).slice(0, 20);
                 let incList = sortedData.filter(t => t.amount > 0).slice(0, 20);
 
-                // Sửa: Lịch sử Chi chuyển đổi sang dạng <table> 3 cột (Ngày, Nội dung, Số tiền) căn hàng đẹp mắt
+                // --- ĐOẠN SỬA LỊCH SỬ CHI ---
                 if (expList.length) {
                     let htmlChi = `<table class="history-table">
                         <thead>
@@ -992,7 +992,8 @@ input:checked + .slider:before {
                         <tbody>`;
                     expList.forEach(t => {
                         let dStr = new Date(t.timestamp).toLocaleDateString('vi-VN');
-                        let contentStr = `<strong>${t.type}</strong> (${t.subtype})${t.note ? ' <br><small style="opacity:0.7;"><i>- ${t.note}</i></small>' : ''}`;
+                        // Dùng cặp dấu `` để bọc chuỗi HTML thì biến ${t.note} mới chạy được
+                        let contentStr = `<strong>${t.type}</strong> (${t.subtype})${t.note ? `<br><small style="opacity:0.7;"><i>- ${t.note}</i></small>` : ''}`;
                         let amtStr = formatVND(Math.abs(t.amount));
                         htmlChi += `<tr>
                             <td class="date-col">${dStr}</td>
@@ -1005,8 +1006,8 @@ input:checked + .slider:before {
                 } else {
                     document.getElementById("expense-history-container").innerHTML = "Chưa có khoản chi nào.";
                 }
-
-                // Sửa: Lịch sử Thu chuyển đổi sang dạng <table> 3 cột (Ngày, Nội dung, Số tiền) căn hàng đẹp mắt
+                
+                // --- ĐOẠN SỬA LỊCH SỬ THU ---
                 if (incList.length) {
                     let htmlThu = `<table class="history-table">
                         <thead>
@@ -1019,7 +1020,8 @@ input:checked + .slider:before {
                         <tbody>`;
                     incList.forEach(t => {
                         let dStr = new Date(t.timestamp).toLocaleDateString('vi-VN');
-                        let contentStr = `<strong>${t.type}</strong> (${t.subtype})${t.note ? ' <br><small style="opacity:0.7;"><i>- ${t.note}</i></small>' : ''}`;
+                        // Tương tự, dùng dấu nháy huyền để render trơn tru phần ghi chú thu nhập
+                        let contentStr = `<strong>${t.type}</strong> (${t.subtype})${t.note ? `<br><small style="opacity:0.7;"><i>- ${t.note}</i></small>` : ''}`;
                         let amtStr = formatVND(t.amount);
                         htmlThu += `<tr>
                             <td class="date-col">${dStr}</td>
