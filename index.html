@@ -670,8 +670,8 @@ input:checked + .slider:before {
 
         <div class="card">
             <h3>Section 3: Tỷ Lệ Nguồn Thu</h3>
-            <div class="stat-row"><span>A (MÌNH):</span><strong id="sec3-Mine">0</strong></div>
-            <div class="stat-row"><span>B (CON CỢP):</span><strong id="sec3-Tiger">0</strong></div>
+            <div class="stat-row"><span style="color: #8BC34A; font-weight: bold;">MÌNH</span><strong id="sec3-Mine">0</strong></div>
+            <div class="stat-row"><span style="color: #E91E63; font-weight: bold;">CON CỢP</span><strong id="sec3-Tiger">0</strong></div>
             <div class="chart-container">
                 <canvas id="chart-sec3-pie"></canvas>
             </div>
@@ -947,6 +947,9 @@ input:checked + .slider:before {
             let total = dataset.reduce((a, b) => a + Math.abs(b), 0);
             let defaultColors = ['#4CAF50', '#F44336', '#FF9800', '#2196F3', '#9C27B0', '#E91E63'];
             
+            // TỰ ĐỘNG LẤY MÀU CHỮ THEO THEO LIGHT/DARK MODE HIỆN TẠI CỦA APP
+            const currentTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim() || '#333333';
+
             charts[canvasId] = new Chart(ctx, {
                 type: 'pie',
                 data: { labels: labels, datasets: [{ data: dataset, backgroundColor: customColors || defaultColors }] },
@@ -954,6 +957,23 @@ input:checked + .slider:before {
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
+                        // ==========================================================
+                        // ĐOẠN THÊM MỚI: CẤU HÌNH MÀU VÀ STYLE CHỮ CHO "MÌNH" & "CON CỢP"
+                        // ==========================================================
+                        legend: {
+                            display: true,
+                            position: 'top', // Hiển thị nằm ở phía trên biểu đồ
+                            labels: {
+                                color: currentTextColor, // Màu chữ tự động đổi theo nền Sáng/Tối
+                                font: {
+                                    size: 13,            // Cỡ chữ vừa vặn, dễ nhìn trên điện thoại
+                                    weight: 'bold',      // Định dạng CHỮ ĐẬM nét sắc sảo
+                                    family: 'inherit'    // Dùng chung font chữ hệ thống của app
+                                },
+                                padding: 12              // Khoảng cách giữa các ô chú thích thông thoáng hơn
+                            }
+                        },
+                        // ==========================================================
                         datalabels: {
                             color: ctx => { let c = ctx.dataset.backgroundColor[ctx.dataIndex]; return (c === '#FFEB3B' || c === '#8BC34A') ? '#111111' : '#ffffff'; },
                             font: { weight: 'bold', size: 12 }, anchor: 'center', align: 'center',
@@ -965,7 +985,7 @@ input:checked + .slider:before {
                     }
                 }
             });
-        }
+        } // end function renderPieChart
 
         function renderChartsAndStats() {
             getAllTransactions(data => {
@@ -1070,7 +1090,7 @@ input:checked + .slider:before {
 
                 if(document.getElementById("sec3-Mine")) document.getElementById("sec3-Mine").textContent = formatVND(sum_Mine);
                 if(document.getElementById("sec3-Tiger")) document.getElementById("sec3-Tiger").textContent = formatVND(sum_Tiger);
-                renderPieChart('chart-sec3-pie', ['A (MÌNH)', 'B (CON CỢP)'], [sum_Mine, sum_Tiger], ['#8BC34A', '#E91E63']);
+                renderPieChart('chart-sec3-pie', ['MÌNH', 'CON CỢP'], [sum_Mine, sum_Tiger], ['#8BC34A', '#E91E63']);
 
                 renderSection4(data);
             });
